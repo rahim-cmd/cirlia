@@ -1,60 +1,240 @@
-import { motion } from "framer-motion"
+import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+
+import Logo from "./Logo";
+import Button from "./Button";
 
 const Navbar = () => {
+
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () =>
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
+
+  }, []);
+
   return (
+    <>
+      {/* NAVBAR */}
 
-    <motion.nav
-      initial={{ opacity: 0, y: -30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1 }}
-      className="fixed top-0 left-0 w-full z-50"
-    >
+      <header
+        className="
+        fixed
+        top-5
+        left-1/2
+        -translate-x-1/2
+        z-50
+        w-[95%]
+        max-w-7xl
+        "
+      >
+        <div
+          className="
+          rounded-full
+          px-6
+          lg:px-8
+          py-4
+          transition-all
+          duration-500
+          "
+          style={{
+            backdropFilter: "blur(25px)",
+            background: scrolled
+              ? "rgba(255,255,255,.70)"
+              : "rgba(255,255,255,.35)",
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
+            border:
+              "1px solid rgba(255,255,255,.40)",
 
-        <div className="backdrop-blur-xl bg-white/20 border border-white/20 rounded-full px-8 py-4 flex items-center justify-between shadow-lg">
-
-          <h1
-            className="text-2xl tracking-[4px]"
-            style={{
-              fontFamily: 'Cormorant Garamond, serif'
-            }}
+            boxShadow: scrolled
+              ? "0 12px 40px rgba(0,0,0,.10)"
+              : "0 8px 30px rgba(0,0,0,.06)"
+          }}
+        >
+          <div
+            className="
+            flex
+            items-center
+            justify-between
+            "
           >
-            Circlia
-          </h1>
+            {/* LOGO */}
 
-          <div className="hidden md:flex items-center gap-10 text-sm tracking-wide">
+            <Logo />
 
-            <a href="#" className="hover:opacity-60 transition">
-              Home
-            </a>
+            {/* DESKTOP */}
 
-            <a href="#" className="hover:opacity-60 transition">
-              About
-            </a>
+            <nav
+              className="
+              hidden
+              lg:flex
+              items-center
+              gap-10
+              "
+            >
+              <a href="#">Home</a>
+              <a href="#">About</a>
+              <a href="#">Journal</a>
+              <a href="#">Contact</a>
+            </nav>
 
-            <a href="#" className="hover:opacity-60 transition">
-              Journal
-            </a>
+            <div
+              className="
+              hidden
+              lg:block
+              "
+            >
+              <Button>
+                Join Circle
+              </Button>
+            </div>
 
+            {/* MOBILE MENU */}
+
+            <button
+              onClick={() => setOpen(true)}
+              className="lg:hidden"
+            >
+              <Menu size={28} />
+            </button>
           </div>
+        </div>
+      </header>
 
-          <button
-            className="px-6 py-3 rounded-full text-white text-sm"
+      {/* MOBILE MENU */}
+
+      <AnimatePresence>
+
+        {open && (
+
+          <motion.div
+            initial={{
+              opacity: 0
+            }}
+            animate={{
+              opacity: 1
+            }}
+            exit={{
+              opacity: 0
+            }}
+            className="
+            fixed
+            inset-0
+            z-[999]
+            "
             style={{
-              backgroundColor: 'var(--color-sage)'
+              backdropFilter: "blur(30px)",
+              background:
+                "rgba(248,243,238,.95)"
             }}
           >
-            Join Circle
-          </button>
+            {/* CLOSE */}
 
-        </div>
+            <div
+              className="
+              flex
+              justify-end
+              p-8
+              "
+            >
+              <button
+                onClick={() => setOpen(false)}
+              >
+                <X size={32} />
+              </button>
+            </div>
 
-      </div>
+            {/* MENU LINKS */}
 
-    </motion.nav>
+            <div
+              className="
+              h-full
+              flex
+              flex-col
+              items-center
+              justify-center
+              gap-8
+              -mt-20
+              "
+            >
+              <a
+                href="#"
+                className="
+                text-5xl
+                "
+                onClick={() =>
+                  setOpen(false)
+                }
+              >
+                Home
+              </a>
 
-  )
-}
+              <a
+                href="#"
+                className="
+                text-5xl
+                "
+                onClick={() =>
+                  setOpen(false)
+                }
+              >
+                About
+              </a>
 
-export default Navbar
+              <a
+                href="#"
+                className="
+                text-5xl
+                "
+                onClick={() =>
+                  setOpen(false)
+                }
+              >
+                Journal
+              </a>
+
+              <a
+                href="#"
+                className="
+                text-5xl
+                "
+                onClick={() =>
+                  setOpen(false)
+                }
+              >
+                Contact
+              </a>
+
+              <div className="mt-6">
+
+                <Button>
+                  Join Circle
+                </Button>
+
+              </div>
+
+            </div>
+            
+          </motion.div>
+
+        )}
+
+      </AnimatePresence>
+    </>
+  );
+};
+
+export default Navbar;

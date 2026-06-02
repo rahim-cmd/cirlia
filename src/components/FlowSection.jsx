@@ -1,125 +1,244 @@
 import { motion } from "framer-motion";
-import Container from "./Container";
 
 const steps = [
   {
+    number: "01",
     title: "Opening Grounding",
-    text: "A gentle arrival into the space."
+    description:
+      "A gentle arrival into the space through mindful breathing, awareness and intention setting.",
+    image: "/images/flow1.jpg",
   },
   {
+    number: "02",
     title: "Visual Meditation",
-    text: "Guided imagery and visual journeys designed to encourage reflection and awareness."
+    description:
+      "Guided visual experiences that encourage calmness, imagination and self-awareness.",
+    image: "/images/flow2.jpg",
   },
   {
+    number: "03",
     title: "Reflective Journaling",
-    text: "Space to explore emotions, imagery, sensations and thoughts."
+    description:
+      "Meaningful prompts and creative reflection designed to deepen personal insight.",
+    image: "/images/flow3.jpg",
   },
   {
-    title: "Weekly Themes",
-    text: "Softness • Trust • Rest • Intuition • Becoming • Connection"
+    number: "04",
+    title: "Circle Sharing",
+    description:
+      "A supportive space where women can listen, connect and share experiences together.",
+    image: "/images/flow4.jpg",
   },
-  {
-    title: "Sharing Circle",
-    text: "An optional space for reflection and witnessing."
-  },
-  {
-    title: "Closing Meditation",
-    text: "A gentle transition back into the present moment."
-  }
 ];
 
 const FlowSection = () => {
   return (
-    <section className="py-40 relative text-dark">
+    <section className="py-40 overflow-hidden">
 
-      <Container>
+      <div className="max-w-7xl mx-auto px-6">
 
-        <div className="text-center mb-24">
+        <div className="text-center mb-32">
 
           <p
-            className="uppercase tracking-[6px] text-sm mb-4"
-            style={{ color: "var(--color-sage)" }}
+            className="uppercase tracking-[8px] text-sm mb-4"
+            style={{
+              color: "var(--color-brown)"
+            }}
           >
-            Circle Journey
+            The Experience
           </p>
 
           <h2
             className="text-5xl md:text-7xl"
             style={{
-              fontFamily: "Cormorant Garamond, serif",
-              color: "var(--color-textLight)"
+              fontFamily: "Cormorant Garamond, serif"
             }}
           >
-            How A Circle Flows
+            What Happens
+            <br />
+            Inside A Circle
           </h2>
 
         </div>
 
-        <div className="relative">
+        {steps.map((step, index) => (
 
-          <div
-            className="absolute left-1/2 top-0 h-full w-[1px]"
-            style={{
-              background:
-                "linear-gradient(to bottom, transparent, rgba(158, 141, 136, 0.94), transparent)"
+          <motion.div
+            key={index}
+            initial={{
+              opacity: 0,
+              y: 80
             }}
-          />
+            whileInView={{
+              opacity: 1,
+              y: 0
+            }}
+            viewport={{
+              once: true
+            }}
+            transition={{
+              duration: 0.8
+            }}
+            className="
+            grid
+            lg:grid-cols-2
+            gap-16
+            items-center
+            mb-40
+            "
+          >
 
-          {steps.map((step, index) => (
+            {/* IMAGE LEFT */}
 
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 80 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: .8 }}
-              viewport={{ once: true }}
-              className={`mb-20 flex ${
-                index % 2 === 0
-                  ? "justify-start"
-                  : "justify-end"
-              }`}
-            >
+            {index % 2 === 0 && (
+              <div className="relative">
 
-              <div
-                className="w-full md:w-[45%] p-8 rounded-[30px] backdrop-blur-xl"
-                style={{
-                  background: "rgba(110, 52, 5, 0.35)",
-                  border: "1px solid rgba(255,255,255,.3)"
-                }}
-              >
-
-                <span
-                  className="text-sm tracking-[4px]"
-                  style={{
-                    color: "var(--color-sage)"
-                  }}
+                <div
+                  className="
+                  absolute
+                  -top-6
+                  -left-6
+                  bg-white
+                  px-5
+                  py-3
+                  rounded-full
+                  shadow-xl
+                  z-10
+                  "
+                  animate={{
+  y: [0, -10, 0]
+}}
+transition={{
+  repeat: Infinity,
+  duration: 4
+}}
                 >
-                  0{index + 1}
-                </span>
+                  Step {step.number}
+                </div>
 
-                <h3
-                  className="text-3xl mt-4 mb-4"
-                  style={{
-                    fontFamily:
-                      "Cormorant Garamond, serif"
-                  }}
+                <div
+                  className="
+                  overflow-hidden
+                  rounded-[40px]
+                  "
+                  whileHover={{
+  y: -10
+}}
                 >
-                  {step.title}
-                </h3>
-
-                <p className="leading-8 opacity-80">
-                  {step.text}
-                </p>
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    className="
+                    w-full
+                    h-[600px]
+                    object-cover
+                    transition-all
+                    duration-700
+                    hover:scale-110
+                    "
+                  />
+                </div>
 
               </div>
+            )}
 
-            </motion.div>
+            {/* CONTENT */}
 
-          ))}
+            <div>
 
-        </div>
+              <span
+                className="
+                text-8xl
+                md:text-9xl
+                opacity-10
+                block
+                mb-4
+                "
+                
+                style={{
+                  fontFamily:
+                    "Cormorant Garamond, serif"
+                }}
+              >
+                {step.number}
+              </span>
 
-      </Container>
+              <h3
+                className="
+                text-4xl
+                md:text-6xl
+                mb-8
+                "
+                style={{
+                  fontFamily:
+                    "Cormorant Garamond, serif"
+                }}
+              >
+                {step.title}
+              </h3>
+
+              <p
+                className="
+                text-lg
+                leading-9
+                opacity-80
+                max-w-xl
+                "
+              >
+                {step.description}
+              </p>
+
+            </div>
+
+            {/* IMAGE RIGHT */}
+
+            {index % 2 !== 0 && (
+              <div className="relative">
+
+                <div
+                  className="
+                  absolute
+                  -top-6
+                  -right-6
+                  bg-white
+                  px-5
+                  py-3
+                  rounded-full
+                  shadow-xl
+                  z-10
+                  "
+                >
+                  Step {step.number}
+                </div>
+
+                <div
+                  className="
+                  overflow-hidden
+                  rounded-[40px]
+                  "
+                >
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    className="
+                    w-full
+                    h-[600px]
+                    object-cover
+                    transition-all
+                    duration-700
+                    hover:scale-110
+                    "
+                  />
+                </div>
+
+              </div>
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
 
     </section>
   );

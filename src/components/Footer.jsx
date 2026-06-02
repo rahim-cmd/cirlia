@@ -1,12 +1,12 @@
 import Container from "./Container";
-
+import Logo from "./Logo";
 const Footer = () => {
   return (
     <footer className="py-20 text-white"   style={{ background: "var(--color-sage)" }}>
 
       <Container>
 
-        <div className="border-t border-black/10 pt-16">
+        <div className="border-t border-white/10 pt-16">
 
           <div className="text-center">
 
@@ -17,6 +17,7 @@ const Footer = () => {
                   "Cormorant Garamond, serif"
               }}
             >
+              <Logo/>
               Circlia
             </h2>
 
