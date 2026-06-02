@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #F6F1EB;
+  color: #4B403A;
+  font-family: 'Inter', sans-serif;
+}
+:root {
+
+  --color-sage: #5C4033;
+  --color-rose: #D8B4A0;
+  --color-clay: #C98C72;
+  --color-cream: #F6F1EB;
+  --color-terracotta: #B76E5A;
+  --color-textDark: #4B403A;
+
+}
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 12s linear infinite;
+}
+@media (min-width: 1024px) {
+
+  body,
+  a,
+  button {
+    cursor: none;
+  }
+
+}
