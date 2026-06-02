@@ -17,7 +17,7 @@ const Button = ({
       `}
       style={{
         backgroundColor:
-          "var(--color-brown)"
+          "var(--color-sage)"
       }}
     >
       {children}
