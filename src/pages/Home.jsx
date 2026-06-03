@@ -16,21 +16,17 @@ const Home = () => {
   return (
 <>
     <MainLayout/>
-
-  <HeroSectionV2/>
-  <GallerySection />
+    <HeroSectionV2/>
+    <GallerySection />
     <AboutSection />
     <FlowSection />
     <ParallaxQuote />
     <ThemesSection />
     <QuoteSection />
-
-<JournalSection />
-<FounderSection />
-
-<NewsletterSection />
-
-<Footer />
+    <JournalSection />
+    <FounderSection />
+    <NewsletterSection />
+    <Footer />
     </>
   )
 }

@@ -2,7 +2,7 @@ import Navbar from "../components/Navbar"
 import GrainOverlay from "../components/GrainOverlay";
 import FloatingShapes from "../components/FloatingShapes";
 import CircleCursor from "../components/CircleCursor";
-
+import Footer from "../components/Footer";
 const MainLayout = ({ children }) => {
   return (
     <div className="relative overflow-hidden">
@@ -21,7 +21,7 @@ const MainLayout = ({ children }) => {
       <main className="relative z-10">
         {children}
       </main>
-
+      
     </div>
   )
 }

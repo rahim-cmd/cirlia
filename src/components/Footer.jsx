@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Container from "./Container";
 import Logo from "./Logo";
 const Footer = () => {
@@ -27,9 +28,10 @@ const Footer = () => {
 
             <div className="flex justify-center gap-10 mt-10">
 
-              <a href="#">Home</a>
-              <a href="#">About</a>
-              <a href="#">Journal</a>
+              <Link to="/">Home</Link>
+              <Link to="/about">About</Link>
+              <Link to="/journal">Journal</Link>
+              <Link to="/contact">Contact</Link>
 
             </div>
 

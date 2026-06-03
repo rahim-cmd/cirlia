@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-
+import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import Button from "./Button";
 
@@ -85,10 +85,10 @@ const Navbar = () => {
               gap-10
               "
             >
-              <a href="#">Home</a>
-              <a href="#">About</a>
-              <a href="#">Journal</a>
-              <a href="#">Contact</a>
+              <Link to="/">Home</Link>
+              <Link to="/about">About</Link>
+              <Link to="/journal">Journal</Link>
+              <Link to="/contact">Contact</Link>
             </nav>
 
             <div
@@ -170,53 +170,21 @@ const Navbar = () => {
               -mt-20
               "
             >
-              <a
-                href="#"
-                className="
-                text-5xl
-                "
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                Home
-              </a>
+              <Link to="/">
+  Home
+</Link>
 
-              <a
-                href="#"
-                className="
-                text-5xl
-                "
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                About
-              </a>
+              <Link to="/about">
+  About
+</Link>
 
-              <a
-                href="#"
-                className="
-                text-5xl
-                "
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                Journal
-              </a>
+              <Link to="/Journal">
+  Journal
+</Link>
 
-              <a
-                href="#"
-                className="
-                text-5xl
-                "
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                Contact
-              </a>
+              <Link to="/Journal">
+  Contact
+</Link>
 
               <div className="mt-6">
 
