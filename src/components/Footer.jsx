@@ -26,17 +26,49 @@ const Footer = () => {
               A space for women to connect
             </p>
 
-            <div className="flex justify-center gap-10 mt-10">
+            <div
+  className="
+  flex
+  flex-wrap
+  justify-center
+  gap-x-8
+  gap-y-4
+  mt-10
+  px-4
+  "
+>
 
-              <Link to="/">Home</Link>
-              <Link to="/about">About</Link>
-              <Link to="/journal">Journal</Link>
-              <Link to="/contact">Contact</Link>
-              <Link to="/privacy-policy">privacy-policy</Link>
-              <Link to="/terms-and-conditions">Terms and Conditions</Link>
-            
+  <Link to="/" className="hover:opacity-70 transition">
+    Home
+  </Link>
 
-            </div>
+  <Link to="/about" className="hover:opacity-70 transition">
+    About
+  </Link>
+
+  <Link to="/journal" className="hover:opacity-70 transition">
+    Journal
+  </Link>
+
+  <Link to="/contact" className="hover:opacity-70 transition">
+    Contact
+  </Link>
+
+  <Link
+    to="/privacy-policy"
+    className="hover:opacity-70 transition"
+  >
+    Privacy Policy
+  </Link>
+
+  <Link
+    to="/terms-and-conditions"
+    className="hover:opacity-70 transition"
+  >
+    Terms & Conditions
+  </Link>
+
+</div>
 
           </div>
 
