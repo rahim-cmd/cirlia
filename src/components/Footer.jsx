@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Container from "./Container";
-import Logo from "./Logo";
+
 const Footer = () => {
   return (
     <footer className="py-20 text-white"   style={{ background: "var(--color-sage)" }}>
@@ -18,7 +18,7 @@ const Footer = () => {
                   "Cormorant Garamond, serif"
               }}
             >
-              <Logo/>
+              
               Circlia
             </h2>
 
