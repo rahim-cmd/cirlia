@@ -1,3 +1,4 @@
+import Footer from "../components/Footer";
 import MainLayout from "../layout/MainLayout";
 
 const PrivacyPolicyPage = () => {
@@ -108,7 +109,7 @@ const PrivacyPolicyPage = () => {
         </div>
 
       </section>
-
+< Footer/>
     </MainLayout>
   );
 };

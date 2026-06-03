@@ -1,3 +1,4 @@
+import Footer from "../components/Footer";
 import MainLayout from "../layout/MainLayout";
 
 const TermsPage = () => {
@@ -103,7 +104,7 @@ const TermsPage = () => {
         </div>
 
       </section>
-
+< Footer/>
     </MainLayout>
   );
 };
