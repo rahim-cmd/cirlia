@@ -3,7 +3,10 @@ import Lenis from "lenis"
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import AboutPage from "./pages/AboutPage";
-
+import JournalPage from "./pages/JournalPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 function App() {
 
   useEffect(() => {
@@ -32,6 +35,24 @@ function App() {
         element={<AboutPage />}
       />
 
+      <Route
+  path="/journal"
+  element={<JournalPage />}
+/>
+<Route
+  path="/contact"
+  element={<ContactPage />}
+/>
+
+  <Route
+  path="/privacy-policy"
+  element={<PrivacyPolicyPage />}
+/>
+
+<Route
+  path="/terms-and-conditions"
+  element={<TermsPage />}
+/>
     </Routes>
   )
 }
