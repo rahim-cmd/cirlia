@@ -182,7 +182,7 @@ const Navbar = () => {
   Journal
 </Link>
 
-              <Link to="/Journal">
+              <Link to="/contact">
   Contact
 </Link>
 
