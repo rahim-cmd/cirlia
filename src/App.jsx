@@ -7,6 +7,7 @@ import JournalPage from "./pages/JournalPage";
 import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
+import ScrollToTop from "./components/ScrollToTop";
 function App() {
 
   useEffect(() => {
@@ -23,8 +24,8 @@ function App() {
   }, [])
 
   return (
+     
     <Routes>
-
       <Route
         path="/"
         element={<Home />}
