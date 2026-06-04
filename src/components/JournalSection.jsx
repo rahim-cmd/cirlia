@@ -4,11 +4,11 @@ import Logo from "./Logo";
 
 const JournalSection = () => {
   return (
-    <section className="py-40 overflow-hidden">
+    <section className="py-24 md:py-40 overflow-hidden">
 
       <div className="max-w-7xl mx-auto px-6">
 
-        <div className="grid lg:grid-cols-2 gap-24 items-center">
+       <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
 
           {/* LEFT */}
 
@@ -41,10 +41,7 @@ const JournalSection = () => {
 
             <h2
               className="
-              text-5xl
-              md:text-7xl
-              leading-none
-              mb-8
+              text-4xl sm:text-5xl md:text-7xl
               "
               style={{
                 fontFamily:
@@ -60,8 +57,7 @@ const JournalSection = () => {
 
             <p
               className="
-              text-lg
-              leading-9
+              text-base md:text-lg leading-8 md:leading-9
               opacity-80
               mb-10
               "
@@ -115,7 +111,14 @@ const JournalSection = () => {
             }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="relative"
+            className="
+              relative
+              mt-8
+              lg:mt-0
+              max-w-[420px]
+              mx-auto
+              w-full
+              "
           >
 
             {/* BACK PAGE */}
@@ -126,7 +129,8 @@ const JournalSection = () => {
               top-6
               left-6
               w-[85%]
-              h-[520px]
+              h-[380px]
+              md:h-[520px]
               rounded-[30px]
               bg-[#E9DDD3]
               rotate-[-8deg]
@@ -141,7 +145,8 @@ const JournalSection = () => {
               top-3
               left-3
               w-[90%]
-              h-[520px]
+              h-[380px]
+              md:h-[520px]
               rounded-[30px]
               bg-[#F2E9E2]
               rotate-[-4deg]
@@ -157,7 +162,8 @@ const JournalSection = () => {
               }}
               className="
               relative
-              h-[520px]
+              h-[380px]
+              md:h-[520px]
               rounded-[30px]
               overflow-hidden
               shadow-2xl
@@ -175,7 +181,7 @@ const JournalSection = () => {
                 justify-center
                 items-center
                 text-center
-                px-10
+                px-6 md:px-10
                 "
               >
   
@@ -192,7 +198,7 @@ const JournalSection = () => {
 
                 <h3
                   className="
-                  text-6xl
+                  text-4xl md:text-6xl
                   leading-none
                   "
                   style={{
@@ -214,7 +220,7 @@ const JournalSection = () => {
                   "
                 />
 
-                <p className="opacity-70">
+                <p className="opacity-70 text-sm md:text-base">
                   Presence • Creativity • Connection
                 </p>
 
@@ -234,8 +240,16 @@ const JournalSection = () => {
               }}
               className="
               absolute
-              -right-8
-              bottom-10
+              right-0
+              md:-right-8
+              bottom-4
+              md:bottom-10
+              text-sm
+              md:text-base
+              px-4
+              md:px-6
+              py-3
+              md:py-4
               bg-white
               rounded-full
               px-6

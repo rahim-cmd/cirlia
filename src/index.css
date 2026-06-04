@@ -11,6 +11,10 @@ body {
   color: #4B403A;
   font-family: 'Inter', sans-serif;
 }
+html,
+body {
+  overflow-x: hidden;
+}
 :root {
 
   --color-sage: #562A2D;

@@ -12,14 +12,14 @@ const themes = [
 ];
 
 const positions = [
-  "ml-0",
-  "ml-32",
-  "ml-12",
-  "ml-48",
-  "ml-20",
-  "ml-40",
-  "ml-8",
-  "ml-56",
+  "ml-0 md:ml-0",
+  "ml-4 md:ml-32",
+  "ml-2 md:ml-12",
+  "ml-6 md:ml-48",
+  "ml-3 md:ml-20",
+  "ml-8 md:ml-40",
+  "ml-2 md:ml-8",
+  "ml-10 md:ml-56",
 ];
 
 const ThemesSection = () => {
