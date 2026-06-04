@@ -17,7 +17,7 @@ const ContactFormSection = () => {
             }}
           >
             <img
-              src="/images/founder.jpeg"
+              src="/images/contact.jpg"
               alt="Founder"
               className="
               w-full

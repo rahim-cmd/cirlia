@@ -18,6 +18,10 @@ const FounderStory = () => {
               alt="Founder"
               className="
               w-full
+              h-[500px]
+              md:h-auto
+              object-cover
+              object-left
               rounded-[40px]
               shadow-2xl
               "

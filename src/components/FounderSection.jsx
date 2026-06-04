@@ -73,8 +73,13 @@ const FounderSection = () => {
                 alt="Founder"
                 className="
                 w-full
-                h-[580px]
+                h-[500px]
+                md:h-auto
                 object-cover
+                object-left
+                rounded-[40px]
+                shadow-2xl
+               
                 transition-all
                 duration-700
                 hover:scale-115
