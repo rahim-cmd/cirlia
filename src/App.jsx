@@ -8,7 +8,21 @@ import ContactPage from "./pages/ContactPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import ScrollToTop from "./components/ScrollToTop";
+import { usePopup } from "./context/PopupContext";
+import JournalPopup from "./components/JournalPopup";
+
+
 function App() {
+
+  const { openPopup } = usePopup();
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    openPopup();
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, []);
 
   useEffect(() => {
 
@@ -25,6 +39,7 @@ function App() {
 
   return (
      
+    <>
     <Routes>
       <Route
         path="/"
@@ -55,6 +70,8 @@ function App() {
   element={<TermsPage />}
 />
     </Routes>
+<JournalPopup />
+    </>
   )
 }
 

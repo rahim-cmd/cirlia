@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import Button from "./Button";
 import Logo from "./Logo";
+import { usePopup } from "../context/PopupContext";
 
 const JournalSection = () => {
+  const { openPopup } = usePopup();
   return (
     <section className="py-24 md:py-40 overflow-hidden">
 
@@ -92,7 +94,7 @@ const JournalSection = () => {
 
             </div>
 
-            <Button>
+            <Button onClick={ openPopup }>
               Receive Free Journal
             </Button>
 

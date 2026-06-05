@@ -6,24 +6,17 @@ import Logo from "./Logo";
 import Button from "./Button";
 
 const Navbar = () => {
-
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
 
-    return () =>
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
@@ -56,12 +49,11 @@ const Navbar = () => {
               ? "rgba(255,255,255,.70)"
               : "rgba(255,255,255,.35)",
 
-            border:
-              "1px solid rgba(255,255,255,.40)",
+            border: "1px solid rgba(255,255,255,.40)",
 
             boxShadow: scrolled
               ? "0 12px 40px rgba(0,0,0,.10)"
-              : "0 8px 30px rgba(0,0,0,.06)"
+              : "0 8px 30px rgba(0,0,0,.06)",
           }}
         >
           <div
@@ -98,16 +90,13 @@ const Navbar = () => {
               "
             >
               <Button>
-                Join Circle
+                <Link to="/contact">Join A Circle</Link>
               </Button>
             </div>
 
             {/* MOBILE MENU */}
 
-            <button
-              onClick={() => setOpen(true)}
-              className="lg:hidden"
-            >
+            <button onClick={() => setOpen(true)} className="lg:hidden">
               <Menu size={28} />
             </button>
           </div>
@@ -117,18 +106,16 @@ const Navbar = () => {
       {/* MOBILE MENU */}
 
       <AnimatePresence>
-
         {open && (
-
           <motion.div
             initial={{
-              opacity: 0
+              opacity: 0,
             }}
             animate={{
-              opacity: 1
+              opacity: 1,
             }}
             exit={{
-              opacity: 0
+              opacity: 0,
             }}
             className="
             fixed
@@ -137,8 +124,7 @@ const Navbar = () => {
             "
             style={{
               backdropFilter: "blur(30px)",
-              background:
-                "rgba(248,243,238,.95)"
+              background: "rgba(248,243,238,.95)",
             }}
           >
             {/* CLOSE */}
@@ -150,9 +136,7 @@ const Navbar = () => {
               p-8
               "
             >
-              <button
-                onClick={() => setOpen(false)}
-              >
+              <button onClick={() => setOpen(false)}>
                 <X size={32} />
               </button>
             </div>
@@ -170,36 +154,22 @@ const Navbar = () => {
               -mt-20
               "
             >
-              <Link to="/">
-  Home
-</Link>
+              <Link to="/">Home</Link>
 
-              <Link to="/about">
-  About
-</Link>
+              <Link to="/about">About</Link>
 
-              <Link to="/Journal">
-  Journal
-</Link>
+              <Link to="/Journal">Journal</Link>
 
-              <Link to="/contact">
-  Contact
-</Link>
+              <Link to="/contact">Contact</Link>
 
               <div className="mt-6">
-
                 <Button>
-                  Join Circle
+                  <Link to="/contact">Join A Circle</Link>
                 </Button>
-
               </div>
-
             </div>
-            
           </motion.div>
-
         )}
-
       </AnimatePresence>
     </>
   );

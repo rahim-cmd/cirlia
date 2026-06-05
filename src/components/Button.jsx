@@ -1,23 +1,21 @@
 const Button = ({
   children,
-  className = ""
+  className = "",
+  ...props
 }) => {
   return (
     <button
+      {...props}
       className={`
-      px-8
-      py-4
-      rounded-full
-      text-white
-      transition-all
-      duration-500
-      hover:scale-105
-      hover:shadow-xl
-      ${className}
+        px-8
+        py-4
+        rounded-full
+        text-white
+        transition
+        ${className}
       `}
       style={{
-        backgroundColor:
-          "var(--color-sage)"
+        background: "var(--color-sage)"
       }}
     >
       {children}

@@ -1,8 +1,13 @@
 import { motion } from "framer-motion";
 import Button from "./Button";
+import { usePopup } from "../context/PopupContext";
+import { Link } from "react-router-dom";
 
 const HeroSectionV2 = () => {
+  const { openPopup } = usePopup();
+ 
   return (
+    
     <section className="min-h-screen flex items-center pt-32 pb-20 relative overflow-hidden">
 
       {/* Background Glow */}
@@ -56,7 +61,9 @@ const HeroSectionV2 = () => {
             <div className="flex flex-wrap gap-5 mt-12">
 
               <Button>
+                <Link to="/contact">
                 Join A Circle
+                </Link>
               </Button>
 
               <button
@@ -71,7 +78,7 @@ const HeroSectionV2 = () => {
                 transition-all
                 duration-500
                 "
-              >
+              onClick={openPopup}>
                 Receive Journal
               </button>
 
