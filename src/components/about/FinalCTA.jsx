@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import Button from "../Button";
-
+import { usePopup } from "../../context/PopupContext";
 const FinalCTA = () => {
+
+  const { openPopup } = usePopup();
   return (
     <section className="pb-32">
 
@@ -47,7 +49,7 @@ const FinalCTA = () => {
 
           <div className="flex flex-wrap justify-center gap-5">
 
-            <Button>
+            <Button onClick={openPopup}>
               Receive Journal
             </Button>
 
