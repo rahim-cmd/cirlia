@@ -14,7 +14,7 @@ const ParallaxQuote = () => {
     >
 
       <img
-        src="/images/founder.jpeg"
+        src="/images/med.jpg"
         className="
         absolute
         inset-0
