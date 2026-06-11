@@ -83,7 +83,7 @@ const JournalPopup = () => {
               alt=""
               className="
               w-full
-              h-64
+              h-54
               object-cover
               object-center
               "
