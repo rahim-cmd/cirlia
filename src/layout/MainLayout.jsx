@@ -1,3 +1,4 @@
+
 import Navbar from "../components/Navbar"
 import GrainOverlay from "../components/GrainOverlay";
 import FloatingShapes from "../components/FloatingShapes";
@@ -18,6 +19,7 @@ const MainLayout = ({ children }) => {
       <Navbar />
       <GrainOverlay />
       <FloatingShapes />
+     
       <main className="relative z-10">
         {children}
       </main>

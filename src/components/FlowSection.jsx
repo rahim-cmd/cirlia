@@ -27,7 +27,7 @@ const steps = [
     title: "Circle Sharing",
     description:
       "A supportive space where women can listen, connect and share experiences together.",
-    image: "/images/flow4.jpg",
+    image: "/images/flow5.png",
   },
 ];
 

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import MainLayout from "../layout/MainLayout"
+import TopBar from "../components/TopBar";
 import HeroSectionV2 from "../components/HeroSectionV2";
 import Container from "../components/Container"
 import AboutSection from "../components/AboutSection"
@@ -16,6 +17,7 @@ const Home = () => {
   return (
 <>
     <MainLayout/>
+     <TopBar />
     <HeroSectionV2/>
     <GallerySection />
     <AboutSection />

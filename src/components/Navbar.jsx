@@ -26,7 +26,7 @@ const Navbar = () => {
       <header
         className="
         fixed
-        top-5
+        top-[48px]
         left-1/2
         -translate-x-1/2
         z-50
@@ -120,7 +120,7 @@ const Navbar = () => {
             className="
             fixed
             inset-0
-            z-[999]
+            z-[99]
             "
             style={{
               backdropFilter: "blur(30px)",
