@@ -7,17 +7,16 @@ const TopBar = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.6 }}
       className="
-      w-full
-      py-3
-      text-center
-      text-sm
-      md:text-base
-      tracking-wide
-      text-white
-      z-[1000]
-      "
+sticky
+top-0
+z-[60]
+w-full
+py-3
+text-center
+text-white
+"
       style={{
-        background: "var(--color-sage)"
+        background: "var(--color-sage)",
       }}
     >
       🤍 A nurturing space created for pregnant women and their wellness journey

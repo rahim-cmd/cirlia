@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePopup } from "../context/PopupContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { sendJournalRequest } from "../utils/email";
 
 const JournalPopup = () => {
   const { showPopup, closePopup } = usePopup();
@@ -21,17 +22,50 @@ const JournalPopup = () => {
       window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ const [loading, setLoading] =
+  useState(false);
 
-    console.log(form);
+const [success, setSuccess] =
+  useState(false);
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    setLoading(true);
+
+    await sendJournalRequest({
+      lead_type: "Journal Request",
+
+      user_name: form.name,
+
+      user_email: form.email,
+
+      message:
+        "User wants to receive the free journal.",
+    });
+
+    setSuccess(true);
+
+    setForm({
+      name: "",
+      email: "",
+    });
+
+    setTimeout(() => {
+      closePopup();
+      setSuccess(false);
+    }, 2500);
+  } catch (error) {
+    console.error(error);
 
     alert(
-      "EmailJS integration next step."
+      "Unable to submit request. Please try again."
     );
-
-    closePopup();
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <AnimatePresence>
@@ -116,6 +150,28 @@ const JournalPopup = () => {
                 a deeper reflection journey.
               </p>
 
+{success && (
+  <div
+    className="
+    mb-6
+    p-4
+    rounded-2xl
+    bg-green-100
+    text-green-800
+    text-center
+    "
+  >
+    ✨ Thank you.
+
+    <br />
+
+    Your request has been received.
+
+    We will personally send your
+    Reflection Journal soon.
+  </div>
+)}
+
               <form
                 onSubmit={handleSubmit}
                 className="space-y-4"
@@ -160,6 +216,7 @@ const JournalPopup = () => {
 
                 <button
                   type="submit"
+                   disabled={loading}
                   className="
                   w-full
                   py-4
@@ -171,7 +228,9 @@ const JournalPopup = () => {
                       "var(--color-sage)",
                   }}
                 >
-                  Receive Free Journal
+                  {loading
+ ? "Sending..."
+ : "Receive Free Journal"}
                 </button>
               </form>
 

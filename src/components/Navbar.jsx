@@ -24,15 +24,17 @@ const Navbar = () => {
       {/* NAVBAR */}
 
       <header
-        className="
-        fixed
-        top-[48px]
-        left-1/2
-        -translate-x-1/2
-        z-50
-        w-[95%]
-        max-w-7xl
-        "
+      
+         className="
+  fixed
+  top-2
+  
+  left-1/2
+  -translate-x-1/2
+  z-50
+  w-[95%]
+  max-w-7xl
+  "
       >
         <div
           className="
@@ -42,6 +44,7 @@ const Navbar = () => {
           py-4
           transition-all
           duration-500
+          
           "
           style={{
             backdropFilter: "blur(25px)",
@@ -54,6 +57,7 @@ const Navbar = () => {
             boxShadow: scrolled
               ? "0 12px 40px rgba(0,0,0,.10)"
               : "0 8px 30px rgba(0,0,0,.06)",
+            
           }}
         >
           <div
@@ -70,11 +74,14 @@ const Navbar = () => {
             {/* DESKTOP */}
 
             <nav
+
+            
               className="
               hidden
               lg:flex
               items-center
               gap-10
+              
               "
             >
               <Link to="/">Home</Link>
@@ -134,6 +141,7 @@ const Navbar = () => {
               flex
               justify-end
               p-8
+              
               "
             >
               <button onClick={() => setOpen(false)}>
