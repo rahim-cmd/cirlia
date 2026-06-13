@@ -136,7 +136,7 @@ const handleSubmit = async (e) => {
                     "Cormorant Garamond, serif",
                 }}
               >
-                Receive Your Free Journal
+                Receive Your Hand Painted Prenatal Journal
               </h2>
 
               <p

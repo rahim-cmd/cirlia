@@ -63,6 +63,12 @@ const Footer = () => {
               </Link>
             </div>
           </div>
+           <div className="text-center m-10 text-md">
+            ZOOM TIMES 'FRIDAYS' 7-8:30pm - UK TIME <br/>
+            <div className="m-5 p-3">
+            Write us :-<Link to="mailto:hello.circlia@gmail.com
+">hello.circlia@gmail.com</Link>   or Whatsapp Call:-<Link to="tel:+44 7762486510">+44 7762486510</Link>       </div>
+          </div>
           <div className="text-center m-10 text-sm">
             Copyright 2026. Design & Developed by Cirlcia.uk
           </div>

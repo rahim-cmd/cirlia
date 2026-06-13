@@ -1,4 +1,3 @@
-
 import Navbar from "../components/Navbar"
 import GrainOverlay from "../components/GrainOverlay";
 import FloatingShapes from "../components/FloatingShapes";
