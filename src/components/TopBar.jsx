@@ -24,7 +24,7 @@ const TopBar = () => {
           background: "var(--color-sage)",
         }}
       >
-        🤍 A nurturing space created for pregnant women and their wellness journey
+        🤍 A nurturing space created for all women and their wellness journey
       </motion.div>
 
       {/* Mobile Bottom Pill */}
