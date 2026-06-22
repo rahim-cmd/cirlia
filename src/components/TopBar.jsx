@@ -60,7 +60,7 @@ const TopBar = () => {
           background: "var(--color-sage)",
         }}
       >
-        🤍 A nurturing space for pregnant women
+        🤍 A nurturing space created for all women and their wellness journey
       </motion.div>
     </>
   );
