@@ -146,7 +146,7 @@ const handleSubmit = async (e) => {
                 opacity-80
                 "
               >
-                Join hundreds of women beginning
+                Join our circle of women beginning
                 a deeper reflection journey.
               </p>
 
