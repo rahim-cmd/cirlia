@@ -1,23 +1,60 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import Button from "./Button";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const syncAuthState = () => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(Boolean(token));
+    };
+
+    syncAuthState();
+
+    const handleStorage = () => {
+      syncAuthState();
+    };
+
+    const handleAuthChange = () => {
+      syncAuthState();
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", handleAuthChange);
+    window.addEventListener("auth:changed", handleAuthChange);
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", handleAuthChange);
+      window.removeEventListener("auth:changed", handleAuthChange);
+    };
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userBookings");
+    localStorage.removeItem("dashboardBooking");
+    setIsLoggedIn(false);
+    window.dispatchEvent(new Event("auth:changed"));
+    navigate("/");
+  };
 
   return (
     <>
@@ -88,6 +125,21 @@ const Navbar = () => {
               <Link to="/about">About</Link>
               <Link to="/journal">Journal</Link>
               <Link to="/contact">Contact</Link>
+              {isLoggedIn ? (
+                <>
+                  <Link to="/dashboard">Dashboard</Link>
+                  <Link to="/profile">Profile</Link>
+                  <button onClick={handleLogout} className="text-left text-sm font-medium text-[#5b4338]">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login">Login</Link>
+                  <Link to="/register">Register</Link>
+                  <Link to="/admin/login">Admin</Link>
+                </>
+              )}
             </nav>
 
             <div
@@ -97,7 +149,7 @@ const Navbar = () => {
               "
             >
               <Button>
-                <Link to="/contact">Join A Circle</Link>
+                <Link to="/circles">Join A Circle</Link>
               </Button>
             </div>
 
@@ -170,9 +222,25 @@ const Navbar = () => {
 
               <Link to="/contact">Contact</Link>
 
+              {isLoggedIn ? (
+                <>
+                  <Link to="/dashboard">Dashboard</Link>
+                  <Link to="/profile">Profile</Link>
+                  <button onClick={handleLogout} className="text-sm font-medium text-[#5b4338]">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login">Login</Link>
+                  <Link to="/register">Register</Link>
+                  <Link to="/admin/login">Admin</Link>
+                </>
+              )}
+
               <div className="mt-6">
                 <Button>
-                  <Link to="/contact">Join A Circle</Link>
+                  <Link to="/circles">Join A Circle</Link>
                 </Button>
               </div>
             </div>

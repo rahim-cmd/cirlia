@@ -1,8 +1,5 @@
-import { motion } from "framer-motion"
 import MainLayout from "../layout/MainLayout"
-import JournalFlipBook from "../components/JournalFlipBook";
 import HeroSectionV2 from "../components/HeroSectionV2";
-import Container from "../components/Container"
 import AboutSection from "../components/AboutSection"
 import ParallaxQuote from "../components/ParallaxQuote";
 import FlowSection from "../components/FlowSection";

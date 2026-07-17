@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import Button from "./Button";
-import Logo from "./Logo";
 import { usePopup } from "../context/PopupContext";
 
 const JournalSection = () => {

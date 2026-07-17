@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const CircleCursor = () => {
-  const [position, setPosition] = useState({
-    x: 0,
-    y: 0,
-  });
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const moveCursor = (e) => {
@@ -33,7 +30,7 @@ const CircleCursor = () => {
         damping: 25,
         stiffness: 250,
       }}
-      className="fixed top-0 left-0 z-[9999] pointer-events-none hidden lg:flex items-center justify-center"
+      className="fixed top-0 left-0 z-[9999] pointer-events-none flex items-center justify-center opacity-100"
     >
       <div className="relative w-[120px] h-[120px]">
 

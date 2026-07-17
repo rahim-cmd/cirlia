@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 const WhyCirclia = () => {
   return (
     <section className="py-32">

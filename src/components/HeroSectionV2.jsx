@@ -61,7 +61,7 @@ const HeroSectionV2 = () => {
             <div className="flex flex-wrap gap-5 mt-12">
 
               <Button>
-                <Link to="/contact">
+                <Link to="/circles">
                 Join A Circle
                 </Link>
               </Button>

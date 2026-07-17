@@ -1,6 +1,6 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@import "tailwindcss";
 
 html {
   scroll-behavior: smooth;
@@ -40,10 +40,16 @@ body {
 }
 @media (min-width: 1024px) {
 
-  body,
-  a,
-  button {
+  body:not(.admin-route),
+  a:not(.admin-route),
+  button:not(.admin-route) {
     cursor: none;
+  }
+
+  body.admin-route,
+  a.admin-route,
+  button.admin-route {
+    cursor: default;
   }
 
 }

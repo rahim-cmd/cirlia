@@ -5,6 +5,7 @@ import { sendJournalRequest } from "../utils/email";
 
 const JournalPopup = () => {
   const { showPopup, closePopup } = usePopup();
+  const isLoggedIn = Boolean(typeof window !== "undefined" && localStorage.getItem("token"));
 
   const [form, setForm] = useState({
     name: "",
@@ -20,13 +21,17 @@ const JournalPopup = () => {
 
     return () =>
       window.removeEventListener("keydown", handleEsc);
-  }, []);
+  }, [closePopup]);
 
  const [loading, setLoading] =
   useState(false);
 
 const [success, setSuccess] =
   useState(false);
+
+  if (isLoggedIn) {
+    return null;
+  }
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -55,7 +60,7 @@ const handleSubmit = async (e) => {
     setTimeout(() => {
       closePopup();
       setSuccess(false);
-    }, 2500);
+    }, 50000);
   } catch (error) {
     console.error(error);
 
