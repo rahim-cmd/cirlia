@@ -1,9 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock3, Mail, ShieldCheck, UserCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
+import { apiClient } from "../lib/apiClient";
+import { API_ENDPOINTS } from "../config/api";
+import { extractList, formatApiError } from "../utils/apiResponse";
+import { normalizeBooking } from "../utils/entities";
+import { humanizeStatus } from "../utils/formatters";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -28,28 +34,25 @@ const getStoredUser = () => {
   }
 };
 
-const getStoredBookings = () => {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const storedBookings = localStorage.getItem("userBookings");
-    return storedBookings ? JSON.parse(storedBookings) : [];
-  } catch (error) {
-    console.error("Unable to read user bookings", error);
-    return [];
-  }
-};
-
 export default function Profile() {
   const navigate = useNavigate();
-  const user = getStoredUser();
-  const bookings = getStoredBookings();
-  const uniqueBookings = bookings.filter((booking, index, array) => {
-    const currentKey = booking.circleId || booking.id || booking.title;
-    return array.findIndex((item) => (item.circleId || item.id || item.title) === currentKey) === index;
-  });
+  const { user: contextUser } = useAuth();
+  const [bookings, setBookings] = useState([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [bookingError, setBookingError] = useState("");
+
+  const user = contextUser || getStoredUser();
+
+  const uniqueBookings = useMemo(
+    () =>
+      bookings.filter((booking, index, array) => {
+        const currentKey = booking.circle_id || booking.id || booking.circle_title;
+        return array.findIndex((item) => (item.circle_id || item.id || item.circle_title) === currentKey) === index;
+      }),
+    [bookings]
+  );
+
+  const latestBooking = uniqueBookings[0] || null;
   const fullName = user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() : "Guest user";
 
   useEffect(() => {
@@ -58,6 +61,34 @@ export default function Profile() {
     if (!token) {
       navigate("/login", { replace: true });
     }
+
+    let ignore = false;
+
+    const loadBookings = async () => {
+      try {
+        const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
+
+        if (!ignore) {
+          setBookings(extractList(payload).map(normalizeBooking));
+          setBookingError("");
+        }
+      } catch (requestError) {
+        if (!ignore) {
+          setBookingError(formatApiError(requestError, "Unable to load your booking details."));
+          setBookings([]);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoadingBookings(false);
+        }
+      }
+    };
+
+    loadBookings();
+
+    return () => {
+      ignore = true;
+    };
   }, [navigate]);
 
   const profileDetails = [
@@ -73,12 +104,12 @@ export default function Profile() {
     },
     {
       label: "Current booking",
-      value: uniqueBookings[0]?.title || "No active booking",
+      value: latestBooking?.circle_title || "No active booking",
       icon: CalendarDays,
     },
     {
       label: "Booking status",
-      value: uniqueBookings[0]?.status || "Not requested",
+      value: latestBooking ? humanizeStatus(latestBooking.booking_status || latestBooking.status) : "Not requested",
       icon: ShieldCheck,
     },
   ];
@@ -132,17 +163,21 @@ export default function Profile() {
               <Clock3 size={16} /> Circle activity
             </div>
 
-            {uniqueBookings.length > 0 ? (
+            {isLoadingBookings ? (
+              <p className="mt-4 text-gray-600">Loading your circle activity...</p>
+            ) : bookingError ? (
+              <p className="mt-4 text-[#8f3e27]">{bookingError}</p>
+            ) : uniqueBookings.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {uniqueBookings.map((booking, index) => (
-                  <div key={`${booking.circleId || index}`} className="rounded-[20px] border border-[#e8d8b8] bg-white p-4 text-sm text-gray-700">
+                  <div key={`${booking.circle_id || booking.id || index}`} className="rounded-[20px] border border-[#e8d8b8] bg-white p-4 text-sm text-gray-700">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <span className="font-semibold text-[#314131]">{booking.title}</span>
+                      <span className="font-semibold text-[#314131]">{booking.circle_title}</span>
                       <span className="rounded-full bg-[#f8f1e8] px-3 py-1 text-xs uppercase tracking-[3px] text-[#7A8E7B]">
-                        {booking.status}
+                        {humanizeStatus(booking.booking_status || booking.status)}
                       </span>
                     </div>
-                    {booking.meetingLink ? (
+                    {booking.zoom_link ? (
                       <p className="mt-2 text-sm text-green-700">Zoom access is ready for this circle.</p>
                     ) : (
                       <p className="mt-2 text-sm text-gray-600">Your booking is still pending approval or waiting for its meeting access.</p>
