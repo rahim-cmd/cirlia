@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import { useAuth } from "../../context/AuthContext";
@@ -19,6 +19,58 @@ export default function JoinCircleSection() {
   const [error, setError] = useState("");
   const [joiningId, setJoiningId] = useState(null);
   const [bookings, setBookings] = useState([]);
+
+  const applySeatDelta = useCallback((circleId, delta) => {
+    if (!circleId || !delta) {
+      return;
+    }
+
+    setCircles((current) =>
+      current.map((circle) => {
+        if (String(circle.id) !== String(circleId)) {
+          return circle;
+        }
+
+        const nextBookedMembers = Math.max(0, Math.min(circle.max_members || Number.MAX_SAFE_INTEGER, Number(circle.booked_members || 0) + delta));
+
+        return {
+          ...circle,
+          booked_members: nextBookedMembers,
+        };
+      })
+    );
+  }, []);
+
+  const loadCircles = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
+
+    try {
+      const circlesPayload = await apiClient.get(API_ENDPOINTS.circles.upcoming);
+      setCircles(extractList(circlesPayload).map(normalizeCircle));
+
+      if (isAuthenticated) {
+        const bookingsPayload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
+        setBookings(extractList(bookingsPayload).map(normalizeBooking));
+      } else {
+        setBookings([]);
+      }
+
+      if (!silent) {
+        setError("");
+      }
+    } catch (requestError) {
+      if (!silent) {
+        setError(formatApiError(requestError, "Unable to load circles."));
+      }
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let ignore = false;
@@ -55,31 +107,43 @@ export default function JoinCircleSection() {
 
     loadInitialCircles();
 
+    const refreshCircles = () => {
+      if (!ignore && document.visibilityState === "visible") {
+        loadCircles({ silent: true });
+      }
+    };
+
+    const handleBookingChange = (event) => {
+      const circleId = event?.detail?.circleId;
+      const delta = Number(event?.detail?.delta || 0);
+
+      if (!ignore && circleId && delta) {
+        applySeatDelta(circleId, delta);
+      }
+
+      if (!ignore && document.visibilityState === "visible") {
+        loadCircles({ silent: true });
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      if (!ignore && document.visibilityState === "visible") {
+        loadCircles({ silent: true });
+      }
+    }, 30000);
+
+    window.addEventListener("focus", refreshCircles);
+    document.addEventListener("visibilitychange", refreshCircles);
+    window.addEventListener("circlia:bookings-changed", handleBookingChange);
+
     return () => {
       ignore = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshCircles);
+      document.removeEventListener("visibilitychange", refreshCircles);
+      window.removeEventListener("circlia:bookings-changed", handleBookingChange);
     };
-  }, [isAuthenticated]);
-
-  const loadCircles = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const circlesPayload = await apiClient.get(API_ENDPOINTS.circles.upcoming);
-      setCircles(extractList(circlesPayload).map(normalizeCircle));
-
-      if (isAuthenticated) {
-        const bookingsPayload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
-        setBookings(extractList(bookingsPayload).map(normalizeBooking));
-      } else {
-        setBookings([]);
-      }
-    } catch (requestError) {
-      setError(formatApiError(requestError, "Unable to load circles."));
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [applySeatDelta, isAuthenticated, loadCircles]);
 
   const bookingsByCircleId = useMemo(() => {
     return bookings.reduce((accumulator, booking) => {
@@ -100,8 +164,10 @@ export default function JoinCircleSection() {
     try {
       setJoiningId(circleId);
       await apiClient.post(API_ENDPOINTS.bookings.create, { circle_id: circleId }, { requiresAuth: true });
+      applySeatDelta(circleId, 1);
       toast.success("Booking request submitted successfully.");
       await loadCircles();
+      window.dispatchEvent(new CustomEvent("circlia:bookings-changed", { detail: { circleId, delta: 1 } }));
     } catch (requestError) {
       toast.error(formatApiError(requestError, "Unable to place booking request."));
     } finally {

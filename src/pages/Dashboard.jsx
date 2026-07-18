@@ -22,6 +22,29 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState(null);
 
+  const loadBookings = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setIsLoading(true);
+      setError("");
+    }
+
+    try {
+      const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
+      setBookings(extractList(payload).map(normalizeBooking));
+      if (!silent) {
+        setError("");
+      }
+    } catch (requestError) {
+      if (!silent) {
+        setError(formatApiError(requestError, "Unable to load your bookings."));
+      }
+    } finally {
+      if (!silent) {
+        setIsLoading(false);
+      }
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
 
@@ -45,24 +68,36 @@ export default function Dashboard() {
 
     loadInitialBookings();
 
+    const refreshOnFocus = () => {
+      if (!ignore && document.visibilityState === "visible") {
+        loadBookings({ silent: true });
+      }
+    };
+
+    const refreshOnBookingChange = () => {
+      if (!ignore) {
+        loadBookings({ silent: true });
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      if (!ignore && document.visibilityState === "visible") {
+        loadBookings({ silent: true });
+      }
+    }, 30000);
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    window.addEventListener("circlia:bookings-changed", refreshOnBookingChange);
+
     return () => {
       ignore = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      window.removeEventListener("circlia:bookings-changed", refreshOnBookingChange);
     };
   }, []);
-
-  const loadBookings = async () => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
-      setBookings(extractList(payload).map(normalizeBooking));
-    } catch (requestError) {
-      setError(formatApiError(requestError, "Unable to load your bookings."));
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const bookingSummary = useMemo(
     () => ({
@@ -149,9 +184,19 @@ export default function Dashboard() {
     setCancellingId(bookingId);
 
     try {
+      const bookingToCancel = bookings.find((booking) => booking.id === bookingId);
+
       await apiClient.put(API_ENDPOINTS.bookings.cancel(bookingId), {}, { requiresAuth: true });
       toast.success("Booking cancelled successfully.");
       await loadBookings();
+      window.dispatchEvent(
+        new CustomEvent("circlia:bookings-changed", {
+          detail: {
+            circleId: bookingToCancel?.circle_id,
+            delta: -1,
+          },
+        })
+      );
     } catch (requestError) {
       toast.error(formatApiError(requestError, "Unable to cancel booking."));
     } finally {

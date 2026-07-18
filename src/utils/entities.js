@@ -14,8 +14,18 @@ export const normalizeCircle = (circle = {}) => ({
   meeting_date: circle.meeting_date || circle.date || "",
   start_time: circle.start_time || circle.startTime || "",
   end_time: circle.end_time || circle.endTime || "",
-  max_members: Number(circle.max_members || circle.maxMembers || circle.capacity || 0),
-  booked_members: Number(circle.booked_members || circle.bookedMembers || circle.current_members || 0),
+  max_members: Number(circle.max_members || circle.maxMembers || circle.capacity || circle.total_seats || circle.totalSeats || 0),
+  booked_members: Number(
+    circle.booked_members ||
+      circle.bookedMembers ||
+      circle.current_members ||
+      circle.currentMembers ||
+      circle.booked_count ||
+      circle.bookedCount ||
+      circle.approved_members ||
+      circle.approvedMembers ||
+      0
+  ),
   host_name: circle.host_name || circle.hostName || circle.host?.name || "Circlia host",
   zoom_link:
     circle.zoom_link ||
@@ -138,20 +148,19 @@ export const normalizeBooking = (booking = {}) => {
       : null) ||
     null;
 
-  const resolvedZoomStatus = String(
+  const rawZoomStatus =
     booking.zoom_status ||
-      booking.zoomStatus ||
-      booking.zoom_lifecycle_status ||
-      booking.zoomLifecycleStatus ||
-      booking.zoom_state ||
-      booking.zoomState ||
-      booking.meeting_status ||
-      booking.meetingStatus ||
-      booking.zoom?.status ||
-      booking.zoom_snapshot_status ||
-      booking.zoomSnapshotStatus ||
-      "pending"
-  ).toLowerCase();
+    booking.zoomStatus ||
+    booking.zoom_lifecycle_status ||
+    booking.zoomLifecycleStatus ||
+    booking.zoom_state ||
+    booking.zoomState ||
+    booking.meeting_status ||
+    booking.meetingStatus ||
+    booking.zoom?.status ||
+    booking.zoom_snapshot_status ||
+    booking.zoomSnapshotStatus ||
+    "";
 
   const resolvedZoomMessage =
     booking.zoom_message || booking.zoomMessage || booking.zoom?.message || booking.notes || booking.reason || booking.admin_reason || "";
@@ -167,6 +176,12 @@ export const normalizeBooking = (booking = {}) => {
 
   const resolvedZoomMeetingId =
     booking.zoom_meeting_id || booking.zoomMeetingId || booking.zoom?.meeting_id || booking.zoom?.meetingId || null;
+
+  const resolvedBookingStatus = String(booking.booking_status || booking.status || "pending").toLowerCase();
+
+  const resolvedZoomStatus = String(
+    rawZoomStatus || (resolvedBookingStatus === "approved" && resolvedZoomLink ? "active" : "pending")
+  ).toLowerCase();
 
   const resolvedSnapshotSynced =
     parseSyncedFlag(
@@ -215,8 +230,8 @@ export const normalizeBooking = (booking = {}) => {
       circle.circle_event_id ||
       circle.circleEventId ||
       null,
-    status: String(booking.booking_status || booking.status || "pending").toLowerCase(),
-    booking_status: String(booking.booking_status || booking.status || "pending").toLowerCase(),
+    status: resolvedBookingStatus,
+    booking_status: resolvedBookingStatus,
     reason: booking.reason || booking.admin_reason || "",
     notes: booking.notes || "",
     approved_at: booking.approved_at || booking.approvedAt || "",
