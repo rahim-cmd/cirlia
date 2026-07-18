@@ -103,26 +103,26 @@ export default function AdminDashboard() {
 
       {!isLoading && !error ? (
         <>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             {statCards.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.label} className="rounded-[28px] border border-[#efe7dc] bg-white p-5 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.25)]">
+                <div key={item.label} className="min-w-0 rounded-[24px] border border-[#efe7dc] bg-white p-4 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.25)] sm:rounded-[28px] sm:p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-[#6a746a]">{item.label}</p>
                     <Icon size={18} className="text-[#8b6e63]" />
                   </div>
-                  <p className="mt-4 text-4xl font-semibold text-[#314131]">{item.value}</p>
+                  <p className="mt-3 break-words text-3xl font-semibold text-[#314131] sm:mt-4 sm:text-4xl">{item.value}</p>
                 </div>
               );
             })}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[28px] border border-[#efe7dc] bg-white p-6">
+          <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="min-w-0 rounded-[24px] border border-[#efe7dc] bg-white p-4 sm:rounded-[28px] sm:p-6">
               <div className="flex items-center gap-2 text-[#314131]">
                 <Activity size={18} />
-                <h3 className="text-xl font-semibold">Operations snapshot</h3>
+                <h3 className="text-lg font-semibold sm:text-xl">Operations snapshot</h3>
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5f665f]">
                 The backend is serving live circles, users, and booking approvals. Use the quick links to move directly into management screens.
@@ -144,10 +144,10 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-[#efe7dc] bg-white p-6">
+            <div className="min-w-0 rounded-[24px] border border-[#efe7dc] bg-white p-4 sm:rounded-[28px] sm:p-6">
               <div className="flex items-center gap-2 text-[#314131]">
                 <LinkIcon size={18} />
-                <h3 className="text-xl font-semibold">Zoom health</h3>
+                <h3 className="text-lg font-semibold sm:text-xl">Zoom health</h3>
               </div>
               <p className="mt-3 text-sm leading-7 text-[#5f665f]">This value comes from the backend Zoom health utility endpoint.</p>
               <div className="mt-6 rounded-[24px] bg-[#fcf7f1] p-5">

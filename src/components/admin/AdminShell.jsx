@@ -23,12 +23,12 @@ export default function AdminShell({ title, subtitle, actions, children }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f2eb] p-4 text-[#243224] md:p-6 lg:p-8">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8f2eb] p-3 text-[#243224] sm:p-4 md:p-6 lg:p-8">
       <CircleCursor />
-      <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-[240px_1fr]">
-        <aside className="rounded-[32px] border border-[#e7ddcf] bg-white p-5 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.25)]">
+      <div className="mx-auto grid max-w-7xl gap-4 md:gap-6 md:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="min-w-0 rounded-[28px] border border-[#e7ddcf] bg-white p-4 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.25)] sm:rounded-[32px] sm:p-5">
           <p className="text-sm uppercase tracking-[5px] text-[#8b6e63]">Circlia admin</p>
-          <h1 className="mt-3 text-3xl font-semibold text-[#314131]" style={{ fontFamily: "Cormorant Garamond, serif" }}>
+          <h1 className="mt-3 text-2xl font-semibold text-[#314131] sm:text-3xl" style={{ fontFamily: "Cormorant Garamond, serif" }}>
             Control center
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#5f665f]">
@@ -66,12 +66,12 @@ export default function AdminShell({ title, subtitle, actions, children }) {
           </button>
         </aside>
 
-        <section className="space-y-6">
-          <header className="rounded-[32px] border border-[#efe7dc] bg-[#314131] p-6 text-white shadow-[0_24px_80px_-40px_rgba(0,0,0,0.3)] md:p-8">
+        <section className="min-w-0 space-y-4 sm:space-y-6">
+          <header className="rounded-[28px] border border-[#efe7dc] bg-[#314131] p-4 text-white shadow-[0_24px_80px_-40px_rgba(0,0,0,0.3)] sm:rounded-[32px] sm:p-6 md:p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm uppercase tracking-[4px] text-[#d8e8d2]">Backend connected</p>
-                <h2 className="mt-2 text-3xl font-semibold" style={{ fontFamily: "Cormorant Garamond, serif" }}>
+                <h2 className="mt-2 break-words text-2xl font-semibold sm:text-3xl" style={{ fontFamily: "Cormorant Garamond, serif" }}>
                   {title}
                 </h2>
                 {subtitle ? <p className="mt-3 max-w-2xl text-sm leading-7 text-[#edf2eb]">{subtitle}</p> : null}
