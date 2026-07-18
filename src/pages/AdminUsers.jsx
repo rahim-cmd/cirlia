@@ -211,8 +211,8 @@ export default function AdminUsers() {
         </button>
       }
     >
-      <div className="rounded-[28px] border border-[#efe7dc] bg-white p-4">
-        <div className="flex items-center gap-3 rounded-[22px] border border-[#e3d7ca] bg-[#fcf7f1] px-4 py-3">
+      <div className="min-w-0 rounded-[24px] border border-[#efe7dc] bg-white p-3 sm:rounded-[28px] sm:p-4">
+        <div className="flex min-w-0 items-center gap-3 rounded-[20px] border border-[#e3d7ca] bg-[#fcf7f1] px-3 py-3 sm:rounded-[22px] sm:px-4">
           <Users size={18} className="text-[#8b6e63]" />
           <input
             value={search}

@@ -7,10 +7,10 @@ export default function Modal({ open, title, description, children, footer, onCl
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#1e261f]/45 px-4 py-8 backdrop-blur-sm">
-      <div className={`w-full ${sizeClass} rounded-[32px] border border-[#e7ddcf] bg-white p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.4)] md:p-8`}>
+      <div className={`max-h-[90vh] w-full overflow-y-auto ${sizeClass} rounded-[28px] border border-[#e7ddcf] bg-white p-4 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.4)] sm:rounded-[32px] sm:p-6 md:p-8`}>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-[#243224]" style={{ fontFamily: "Cormorant Garamond, serif" }}>
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold text-[#243224] sm:text-2xl" style={{ fontFamily: "Cormorant Garamond, serif" }}>
               {title}
             </h2>
             {description ? <p className="mt-2 text-sm leading-6 text-[#5c665e]">{description}</p> : null}
