@@ -105,6 +105,18 @@ export default function RegisterSection() {
               {fieldErrors.password ? <p className="mt-2 px-5 text-xs text-[#a14a2a]">{fieldErrors.password}</p> : null}
             </div>
 
+            <p className="rounded-2xl border border-[#e7ddcf] bg-[#fcf7f1] px-4 py-3 text-xs leading-6 text-[#5f665f] sm:px-5 sm:text-sm">
+              By registering on this website, you agree to the{" "}
+              <Link to="/privacy-policy" className="font-semibold text-[#314131] underline underline-offset-4">
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link to="/terms-and-conditions" className="font-semibold text-[#314131] underline underline-offset-4">
+                Terms and Conditions
+              </Link>
+              .
+            </p>
+
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Creating account..." : "Create Account"}
             </Button>

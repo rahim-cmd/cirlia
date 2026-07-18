@@ -23,6 +23,22 @@ export const sendJournalRequest = (data) => {
     PUBLIC_KEY
   );
 };
+
+const sanitizeBookingEmailPayload = (data = {}) => {
+  const payload = { ...data };
+
+  delete payload.zoom_link;
+  delete payload.zoomLink;
+  delete payload.join_url;
+  delete payload.joinUrl;
+  delete payload.meeting_link;
+  delete payload.meetingLink;
+  delete payload.zoom_start_url;
+  delete payload.zoomStartUrl;
+
+  return payload;
+};
+
 export const sendBookingConfirmation = (data) => {
   if (!SERVICE_ID || !PUBLIC_KEY) {
     return Promise.resolve();
@@ -34,7 +50,7 @@ export const sendBookingConfirmation = (data) => {
     return Promise.resolve();
   }
 
-  return emailjs.send(SERVICE_ID, template, data, PUBLIC_KEY);
+  return emailjs.send(SERVICE_ID, template, sanitizeBookingEmailPayload(data), PUBLIC_KEY);
 };
 export const sendContactRequest = (data) => {
   return emailjs.send(

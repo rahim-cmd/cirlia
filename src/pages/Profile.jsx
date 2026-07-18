@@ -38,6 +38,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { user: contextUser } = useAuth();
   const [bookings, setBookings] = useState([]);
+  const [currentBooking, setCurrentBooking] = useState(null);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
   const [bookingError, setBookingError] = useState("");
 
@@ -52,7 +53,7 @@ export default function Profile() {
     [bookings]
   );
 
-  const latestBooking = uniqueBookings[0] || null;
+  const latestBooking = currentBooking || uniqueBookings[0] || null;
   const fullName = user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() : "Guest user";
 
   useEffect(() => {
@@ -66,16 +67,24 @@ export default function Profile() {
 
     const loadBookings = async () => {
       try {
-        const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
+        const [profilePayload, bookingsPayload] = await Promise.all([
+          apiClient.get(API_ENDPOINTS.auth.profile, { requiresAuth: true }),
+          apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true }),
+        ]);
+
+        const profileData = profilePayload?.data || profilePayload || {};
+        const profileCurrentBooking = profileData?.current_booking || profileData?.currentBooking;
 
         if (!ignore) {
-          setBookings(extractList(payload).map(normalizeBooking));
+          setBookings(extractList(bookingsPayload).map(normalizeBooking));
+          setCurrentBooking(profileCurrentBooking ? normalizeBooking(profileCurrentBooking) : null);
           setBookingError("");
         }
       } catch (requestError) {
         if (!ignore) {
           setBookingError(formatApiError(requestError, "Unable to load your booking details."));
           setBookings([]);
+          setCurrentBooking(null);
         }
       } finally {
         if (!ignore) {

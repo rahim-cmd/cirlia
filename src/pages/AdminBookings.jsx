@@ -8,7 +8,7 @@ import { ErrorState, LoadingState } from "../components/ui/LoadingState";
 import { API_ENDPOINTS } from "../config/api";
 import { useToast } from "../context/ToastContext";
 import { apiClient } from "../lib/apiClient";
-import { extractList, formatApiError } from "../utils/apiResponse";
+import { extractItem, extractList, formatApiError } from "../utils/apiResponse";
 import { normalizeBooking } from "../utils/entities";
 import { formatDisplayDate, formatTimeRange } from "../utils/formatters";
 
@@ -38,6 +38,9 @@ export default function AdminBookings() {
   const [decisionState, setDecisionState] = useState({ type: null, booking: null, reason: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [resyncingCircleId, setResyncingCircleId] = useState(null);
+  const [joinControlState, setJoinControlState] = useState({ booking: null, isEnabled: true, reason: "" });
+  const [isUpdatingJoinControl, setIsUpdatingJoinControl] = useState(false);
+  const [joinLogsState, setJoinLogsState] = useState({ open: false, booking: null, isLoading: false, error: "", rows: [] });
 
   const loadBookings = async () => {
     setIsLoading(true);
@@ -160,6 +163,76 @@ export default function AdminBookings() {
     }
   };
 
+  const openJoinControlModal = (booking, isEnabled) => {
+    setJoinControlState({
+      booking,
+      isEnabled,
+      reason: isEnabled ? "" : "Join access disabled by admin",
+    });
+  };
+
+  const closeJoinControlModal = () => {
+    setJoinControlState({ booking: null, isEnabled: true, reason: "" });
+  };
+
+  const handleJoinControlUpdate = async () => {
+    if (!joinControlState.booking?.id) {
+      return;
+    }
+
+    setIsUpdatingJoinControl(true);
+
+    try {
+      const payload = { is_enabled: joinControlState.isEnabled };
+
+      if (!joinControlState.isEnabled) {
+        payload.reason = joinControlState.reason || "Join access disabled by admin";
+      }
+
+      await apiClient.put(API_ENDPOINTS.bookings.joinControl(joinControlState.booking.id), payload, { requiresAuth: true });
+      toast.success(joinControlState.isEnabled ? "Join access enabled." : "Join access disabled.");
+      closeJoinControlModal();
+      await loadBookings();
+    } catch (requestError) {
+      toast.error(formatApiError(requestError, "Unable to update join access."));
+    } finally {
+      setIsUpdatingJoinControl(false);
+    }
+  };
+
+  const openJoinLogsModal = async (booking) => {
+    if (!booking?.id) {
+      return;
+    }
+
+    setJoinLogsState({ open: true, booking, isLoading: true, error: "", rows: [] });
+
+    try {
+      const payload = await apiClient.get(API_ENDPOINTS.bookings.joinLogs(booking.id), { requiresAuth: true });
+      const item = extractItem(payload);
+      const rows =
+        (Array.isArray(item) && item) ||
+        (Array.isArray(item?.logs) && item.logs) ||
+        (Array.isArray(item?.rows) && item.rows) ||
+        (Array.isArray(payload?.logs) && payload.logs) ||
+        extractList(payload);
+
+      setJoinLogsState({ open: true, booking, isLoading: false, error: "", rows });
+    } catch (requestError) {
+      setJoinLogsState({
+        open: true,
+        booking,
+        isLoading: false,
+        error: formatApiError(requestError, "Unable to load join logs."),
+        rows: [],
+      });
+    }
+  };
+
+  const closeJoinLogsModal = () => {
+    setJoinLogsState({ open: false, booking: null, isLoading: false, error: "", rows: [] });
+  };
+
   const columns = [
     {
       key: "member",
@@ -216,6 +289,18 @@ export default function AdminBookings() {
       },
     },
     {
+      key: "join_access",
+      label: "Join access",
+      render: (booking) => (
+        <div className="space-y-1">
+          <StatusBadge status={booking.join_enabled === true ? "enabled" : "disabled"} />
+          <p className="text-xs text-[#6b716d]">can_join: {booking.can_join === true ? "yes" : "no"}</p>
+          {booking.join_lock_reason ? <p className="text-xs text-[#8f3e27]">{booking.join_lock_reason}</p> : null}
+          {booking.join_locked_at ? <p className="text-xs text-[#6b716d]">Locked: {formatDisplayDate(booking.join_locked_at)}</p> : null}
+        </div>
+      ),
+    },
+    {
       key: "actions",
       label: "Actions",
       render: (booking) => (
@@ -249,6 +334,29 @@ export default function AdminBookings() {
               Join URL
             </a>
           ) : null}
+          <button
+            type="button"
+            onClick={() => openJoinControlModal(booking, true)}
+            disabled={isUpdatingJoinControl}
+            className="rounded-full border border-[#c9e2d0] px-3 py-2 text-xs font-semibold text-[#255135] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Enable Join
+          </button>
+          <button
+            type="button"
+            onClick={() => openJoinControlModal(booking, false)}
+            disabled={isUpdatingJoinControl}
+            className="rounded-full border border-[#efc6b8] px-3 py-2 text-xs font-semibold text-[#9d4327] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Disable Join
+          </button>
+          <button
+            type="button"
+            onClick={() => openJoinLogsModal(booking)}
+            className="rounded-full border border-[#d8d7eb] px-3 py-2 text-xs font-semibold text-[#3b4271]"
+          >
+            Join Logs
+          </button>
         </div>
       ),
     },
@@ -312,6 +420,102 @@ export default function AdminBookings() {
             />
           </label>
         </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(joinControlState.booking)}
+        onClose={closeJoinControlModal}
+        title={joinControlState.isEnabled ? "Enable join access" : "Disable join access"}
+        description={`Update join access for ${joinControlState.booking?.user_name || "this booking"}.`}
+        footer={[
+          <button key="cancel" type="button" onClick={closeJoinControlModal} className="rounded-full border border-[#ded3c7] px-5 py-3 text-sm font-semibold text-[#314131]">
+            Cancel
+          </button>,
+          <button
+            key="confirm"
+            type="button"
+            disabled={isUpdatingJoinControl}
+            onClick={handleJoinControlUpdate}
+            className={`rounded-full px-5 py-3 text-sm font-semibold text-white disabled:opacity-70 ${joinControlState.isEnabled ? "bg-[#314131]" : "bg-[#a44d31]"}`}
+          >
+            {isUpdatingJoinControl ? "Saving..." : joinControlState.isEnabled ? "Enable Join" : "Disable Join"}
+          </button>,
+        ]}
+      >
+        <div className="space-y-3">
+          <div className="rounded-[18px] bg-[#fcf7f1] p-4 text-sm text-[#314131]">
+            <p className="font-semibold">{joinControlState.booking?.circle_title}</p>
+            <p className="mt-1">{joinControlState.booking?.user_name}</p>
+          </div>
+
+          {!joinControlState.isEnabled ? (
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#314131]">Reason</span>
+              <textarea
+                rows="4"
+                value={joinControlState.reason}
+                onChange={(event) => setJoinControlState((current) => ({ ...current, reason: event.target.value }))}
+                className="w-full rounded-2xl border border-[#e3d7ca] bg-[#fcf7f1] px-4 py-3 outline-none"
+              />
+            </label>
+          ) : null}
+        </div>
+      </Modal>
+
+      <Modal
+        open={joinLogsState.open}
+        onClose={closeJoinLogsModal}
+        title={`Join logs: ${joinLogsState.booking?.user_name || "Member"}`}
+        description="Booking join activity from backend logs."
+        size="lg"
+      >
+        {joinLogsState.isLoading ? <LoadingState label="Loading join logs..." /> : null}
+        {!joinLogsState.isLoading && joinLogsState.error ? <ErrorState message={joinLogsState.error} onRetry={() => openJoinLogsModal(joinLogsState.booking)} /> : null}
+
+        {!joinLogsState.isLoading && !joinLogsState.error ? (
+          joinLogsState.rows.length ? (
+            <div className="overflow-hidden rounded-[20px] border border-[#e8dfd2]">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-[#efe7dc] text-sm">
+                  <thead className="bg-[#fcf7f1] text-left text-xs uppercase tracking-[2px] text-[#8b6e63]">
+                    <tr>
+                      <th className="px-3 py-3">Booking</th>
+                      <th className="px-3 py-3">Event</th>
+                      <th className="px-3 py-3">Source</th>
+                      <th className="px-3 py-3">Status</th>
+                      <th className="px-3 py-3">Message</th>
+                      <th className="px-3 py-3">IP</th>
+                      <th className="px-3 py-3">User agent</th>
+                      <th className="px-3 py-3">Created at</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f2ebe3] text-[#314131]">
+                    {joinLogsState.rows.map((log, index) => {
+                      const eventType = String(log.event_type || log.type || "").toLowerCase();
+                      const isJoinStarted = eventType.includes("join_start");
+                      const isJoinEnded = eventType.includes("join_end");
+
+                      return (
+                        <tr key={log.id || log.log_id || index} className={isJoinStarted ? "bg-[#edf7ef]" : isJoinEnded ? "bg-[#fff1ed]" : ""}>
+                          <td className="px-3 py-3">{log.booking_id || log.bookingId || "-"}</td>
+                          <td className="px-3 py-3">{log.event_type || log.type || "-"}</td>
+                          <td className="px-3 py-3">{log.event_source || log.source || "-"}</td>
+                          <td className="px-3 py-3"><StatusBadge status={String(log.status || "default").toLowerCase()} /></td>
+                          <td className="px-3 py-3">{log.message || "-"}</td>
+                          <td className="px-3 py-3">{log.ip_address || log.ip || "-"}</td>
+                          <td className="px-3 py-3">{log.user_agent || log.userAgent || "-"}</td>
+                          <td className="px-3 py-3">{formatDisplayDate(log.created_at || log.createdAt)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-[20px] border border-dashed border-[#ddcfbf] bg-[#fcf7f1] p-4 text-sm text-[#6b716d]">No join logs found for this booking.</div>
+          )
+        ) : null}
       </Modal>
     </AdminShell>
   );

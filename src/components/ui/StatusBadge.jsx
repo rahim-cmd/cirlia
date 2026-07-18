@@ -9,6 +9,8 @@ const STATUS_STYLES = {
   expired: "bg-[#f2f1f0] text-[#6a6660] border-[#d8d4cf]",
   synced: "bg-[#edf7ef] text-[#255135] border-[#c9e2d0]",
   unsynced: "bg-[#fff1ed] text-[#9d4327] border-[#efc6b8]",
+  enabled: "bg-[#edf7ef] text-[#255135] border-[#c9e2d0]",
+  disabled: "bg-[#fff1ed] text-[#9d4327] border-[#efc6b8]",
   default: "bg-[#f5f2ee] text-[#314131] border-[#ddd5cf]",
 };
 

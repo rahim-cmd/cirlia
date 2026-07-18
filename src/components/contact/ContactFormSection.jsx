@@ -71,7 +71,7 @@ const ContactFormSection = () => {
                   "var(--color-sage)",
               }}
             >
-              Zoom Times ‘Fridays 7:00–8:30pm UK Time’
+              Zoom Times Thursday's 7:00–8:30pm UK Time’
             </h3>
 
             <img

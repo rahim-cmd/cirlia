@@ -1,4 +1,5 @@
-export const API_BASE_URL = "https://api.circlia.uk/api/v1";
+const configuredBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+export const API_BASE_URL = String(configuredBaseUrl).replace(/\/+$/, "");
 
 export const STORAGE_KEYS = {
   token: "token",
@@ -29,6 +30,10 @@ export const API_ENDPOINTS = {
     approve: (id) => `/bookings/${id}/approve`,
     reject: (id) => `/bookings/${id}/reject`,
     updateStatus: (id) => `/bookings/${id}/status`,
+    joinStart: (id) => `/bookings/${id}/join/start`,
+    joinEnd: (id) => `/bookings/${id}/join/end`,
+    joinLogs: (id) => `/bookings/${id}/join/logs`,
+    joinControl: (id) => `/bookings/${id}/join/control`,
   },
   users: {
     list: "/users",

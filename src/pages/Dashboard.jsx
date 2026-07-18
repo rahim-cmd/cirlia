@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Link as LinkIcon, LogOut } from "lucide-react";
+import { CalendarDays, Link as LinkIcon, LogOut, Square } from "lucide-react";
 import MainLayout from "../layout/MainLayout";
 import Footer from "../components/Footer";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { API_ENDPOINTS } from "../config/api";
 import { apiClient } from "../lib/apiClient";
-import { extractList, formatApiError } from "../utils/apiResponse";
+import { extractItem, extractList, formatApiError } from "../utils/apiResponse";
 import { normalizeBooking } from "../utils/entities";
 import { formatDisplayDate, formatTimeRange, humanizeStatus } from "../utils/formatters";
 
@@ -21,6 +21,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState(null);
+  const [joiningBookingId, setJoiningBookingId] = useState(null);
+  const [endingBookingId, setEndingBookingId] = useState(null);
 
   const loadBookings = async ({ silent = false } = {}) => {
     if (!silent) {
@@ -140,7 +142,45 @@ export default function Dashboard() {
     return humanizeStatus(booking.zoom_status || booking.booking_status);
   };
 
-  const canJoinMeeting = (booking) => ["active", "updated"].includes(booking.zoom_status) && Boolean(booking.zoom_link);
+  const canJoinMeeting = (booking) => {
+    if (booking.booking_status !== "approved") {
+      return false;
+    }
+
+    if (booking.zoom_status === "expired") {
+      return false;
+    }
+
+    if (!booking.zoom_link) {
+      return false;
+    }
+
+    return booking.join_enabled === true && booking.can_join === true;
+  };
+
+  const getJoinHelperText = (booking) => {
+    if (booking.zoom_status === "expired") {
+      return booking.zoom_message || "Meeting completed or join window expired.";
+    }
+
+    if (!booking.zoom_link) {
+      return booking.zoom_message || booking.join_message || "Join URL is not available yet.";
+    }
+
+    if (booking.join_enabled === false) {
+      return booking.join_lock_reason || booking.join_message || "Join access is disabled by admin.";
+    }
+
+    if (booking.can_join === false) {
+      return booking.join_message || booking.join_lock_reason || "Join will be enabled 2 minutes before meeting start time.";
+    }
+
+    if (booking.join_lock_reason) {
+      return booking.join_lock_reason;
+    }
+
+    return booking.join_message || "Join is available from your dashboard.";
+  };
 
   const getZoomMessage = (booking) => {
     if (booking.booking_status === "pending") {
@@ -201,6 +241,50 @@ export default function Dashboard() {
       toast.error(formatApiError(requestError, "Unable to cancel booking."));
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleJoinStart = async (booking) => {
+    if (!booking?.id) {
+      return;
+    }
+
+    setJoiningBookingId(booking.id);
+
+    try {
+      const payload = await apiClient.post(API_ENDPOINTS.bookings.joinStart(booking.id), {}, { requiresAuth: true });
+      const responseData = extractItem(payload);
+      const responseZoomLink =
+        responseData?.zoom_link || responseData?.zoomLink || responseData?.join_url || responseData?.joinUrl || booking.zoom_link;
+
+      toast.success("Meeting access granted. Opening Zoom...");
+      await loadBookings({ silent: true });
+
+      if (responseZoomLink) {
+        window.open(responseZoomLink, "_blank", "noopener,noreferrer");
+      }
+    } catch (requestError) {
+      toast.error(formatApiError(requestError, "Unable to start join session."));
+    } finally {
+      setJoiningBookingId(null);
+    }
+  };
+
+  const handleJoinEnd = async (booking) => {
+    if (!booking?.id) {
+      return;
+    }
+
+    setEndingBookingId(booking.id);
+
+    try {
+      await apiClient.post(API_ENDPOINTS.bookings.joinEnd(booking.id), {}, { requiresAuth: true });
+      toast.success("Session ended successfully.");
+      await loadBookings({ silent: true });
+    } catch (requestError) {
+      toast.error(formatApiError(requestError, "Unable to end session."));
+    } finally {
+      setEndingBookingId(null);
     }
   };
 
@@ -316,16 +400,32 @@ export default function Dashboard() {
                           </p>
                         </div>
 
-                        {canJoinMeeting(booking) ? (
-                          <a
-                            href={booking.zoom_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#314131] px-5 py-3 font-semibold text-white"
+                        <div className="space-y-2">
+                          <p className="text-xs text-[#667066]">{getJoinHelperText(booking)}</p>
+                          {booking.join_locked_at ? (
+                            <p className="text-xs text-[#8b6e63]">Join locked at: {formatDisplayDate(booking.join_locked_at)}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            disabled={!canJoinMeeting(booking) || joiningBookingId === booking.id}
+                            onClick={() => handleJoinStart(booking)}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#314131] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            <LinkIcon size={16} /> Join with this URL
-                          </a>
-                        ) : null}
+                            <LinkIcon size={16} /> {joiningBookingId === booking.id ? "Starting..." : "Join Meeting"}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={endingBookingId === booking.id}
+                            onClick={() => handleJoinEnd(booking)}
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e3d7ca] px-5 py-3 font-semibold text-[#314131] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Square size={14} /> {endingBookingId === booking.id ? "Ending..." : "End Session"}
+                          </button>
+                        </div>
                       </div>
                     ) : null}
                   </div>

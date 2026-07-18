@@ -62,29 +62,29 @@ export const normalizeUserRecord = (user = {}) => ({
 });
 
 export const normalizeBooking = (booking = {}) => {
-    const parseSyncedFlag = (value) => {
-      if (typeof value === "boolean") {
-        return value;
+  const parseBooleanFlag = (value, trueValues = [], falseValues = []) => {
+    if (typeof value === "boolean") {
+      return value;
+    }
+
+    if (typeof value === "number") {
+      return value > 0;
+    }
+
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+
+      if (["yes", "true", "1", "enabled", "enable", "active", "allowed", ...trueValues].includes(normalized)) {
+        return true;
       }
 
-      if (typeof value === "number") {
-        return value > 0;
+      if (["no", "false", "0", "disabled", "disable", "inactive", "blocked", ...falseValues].includes(normalized)) {
+        return false;
       }
+    }
 
-      if (typeof value === "string") {
-        const normalized = value.trim().toLowerCase();
-
-        if (["synced", "yes", "true", "1", "available", "active"].includes(normalized)) {
-          return true;
-        }
-
-        if (["unsynced", "no", "false", "0", "missing", "pending"].includes(normalized)) {
-          return false;
-        }
-      }
-
-      return null;
-    };
+    return null;
+  };
 
   const user = booking.user || booking.member || {};
   const circle =
@@ -184,7 +184,7 @@ export const normalizeBooking = (booking = {}) => {
   ).toLowerCase();
 
   const resolvedSnapshotSynced =
-    parseSyncedFlag(
+    parseBooleanFlag(
       booking.zoom_snapshot_synced ??
         booking.zoomSnapshotSynced ??
         booking.snapshot_synced ??
@@ -196,9 +196,42 @@ export const normalizeBooking = (booking = {}) => {
         booking.zoom?.snapshot_synced ??
         booking.zoom?.snapshotSynced ??
         booking.zoom?.sync_status ??
-        booking.zoom?.syncStatus
+        booking.zoom?.syncStatus,
+      ["synced", "available"],
+      ["unsynced", "missing", "pending"]
     ) ??
     null;
+
+  const resolvedJoinEnabled =
+    parseBooleanFlag(
+      booking.join_enabled ??
+        booking.joinEnabled ??
+        booking.is_join_enabled ??
+        booking.isJoinEnabled ??
+        booking.join?.enabled ??
+        booking.join?.is_enabled ??
+        booking.join?.isEnabled
+    ) ?? null;
+
+  const resolvedCanJoin =
+    parseBooleanFlag(
+      booking.can_join ??
+        booking.canJoin ??
+        booking.join_available ??
+        booking.joinAvailable ??
+        booking.join?.can_join ??
+        booking.join?.canJoin ??
+        booking.join?.available
+    ) ?? null;
+
+  const resolvedJoinMessage =
+    booking.join_message || booking.joinMessage || booking.join?.message || booking.zoom_message || booking.zoomMessage || "";
+
+  const resolvedJoinLockReason =
+    booking.join_lock_reason || booking.joinLockReason || booking.lock_reason || booking.lockReason || booking.join?.lock_reason || booking.join?.lockReason || "";
+
+  const resolvedJoinLockedAt =
+    booking.join_locked_at || booking.joinLockedAt || booking.locked_at || booking.lockedAt || booking.join?.locked_at || booking.join?.lockedAt || null;
 
   const resolvedSnapshotUpdatedAt =
     booking.snapshot_updated_at ||
@@ -245,6 +278,11 @@ export const normalizeBooking = (booking = {}) => {
     zoom_updated_at: booking.zoom_updated_at || booking.zoomUpdatedAt || booking.zoom?.updated_at || booking.zoom?.updatedAt || null,
     zoom_snapshot_synced: resolvedSnapshotSynced,
     zoom_snapshot_updated_at: resolvedSnapshotUpdatedAt,
+    join_enabled: resolvedJoinEnabled,
+    can_join: resolvedCanJoin,
+    join_message: resolvedJoinMessage,
+    join_lock_reason: resolvedJoinLockReason,
+    join_locked_at: resolvedJoinLockedAt,
     created_at: booking.created_at || booking.createdAt || "",
     meeting_date: booking.meeting_date || circle.meeting_date || "",
     start_time: booking.start_time || circle.start_time || "",
