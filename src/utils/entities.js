@@ -87,6 +87,7 @@ export const normalizeBooking = (booking = {}) => {
   };
 
   const user = booking.user || booking.member || {};
+  const relatedUser = booking.user_details || booking.userDetails || booking.member_details || booking.memberDetails || {};
   const circle =
     booking.circle ||
     booking.circle_event ||
@@ -248,6 +249,27 @@ export const normalizeBooking = (booking = {}) => {
     booking.zoom?.syncedAt ||
     null;
 
+  const resolvedUserName =
+    booking.user_name ||
+    booking.userName ||
+    booking.member_name ||
+    booking.memberName ||
+    [booking.first_name || booking.firstName || "", booking.last_name || booking.lastName || ""].join(" ").trim() ||
+    [booking.member_first_name || booking.memberFirstName || "", booking.member_last_name || booking.memberLastName || ""].join(" ").trim() ||
+    booking.name ||
+    booking.full_name ||
+    booking.fullName ||
+    [relatedUser.first_name || relatedUser.firstName || "", relatedUser.last_name || relatedUser.lastName || ""].join(" ").trim() ||
+    relatedUser.name ||
+    relatedUser.full_name ||
+    relatedUser.fullName ||
+    user.full_name ||
+    user.fullName ||
+    [user.first_name || user.firstName || "", user.last_name || user.lastName || ""].join(" ").trim() ||
+    user.name ||
+    (booking.email || user.email ? String(booking.email || user.email).split("@")[0] : "") ||
+    "Member";
+
   return {
     id: booking.id || booking.booking_id || booking._id,
     user_id: booking.user_id || user.id || user.user_id,
@@ -288,11 +310,7 @@ export const normalizeBooking = (booking = {}) => {
     start_time: booking.start_time || circle.start_time || "",
     end_time: booking.end_time || circle.end_time || "",
     circle_title: resolvedCircleTitle,
-    user_name:
-      booking.user_name ||
-      [user.first_name || user.firstName || "", user.last_name || user.lastName || ""].join(" ").trim() ||
-      user.name ||
-      "Member",
+    user_name: resolvedUserName,
     email: booking.email || user.email || "",
   };
 };
