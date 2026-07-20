@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
     joinEnd: (id) => `/bookings/${id}/join/end`,
     joinLogs: (id) => `/bookings/${id}/join/logs`,
     joinControl: (id) => `/bookings/${id}/join/control`,
+    circleJoinControl: (circleId) => `/bookings/circle/${circleId}/join/control`,
   },
   users: {
     list: "/users",

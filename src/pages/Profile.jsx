@@ -123,6 +123,22 @@ export default function Profile() {
     },
   ];
 
+  const getBookingAccessMessage = (booking) => {
+    if ((booking.booking_status || booking.status) !== "approved") {
+      return "This booking is not approved yet, so join access is unavailable.";
+    }
+
+    if (!booking.zoom_link) {
+      return booking.join_message || "Join URL is not available yet.";
+    }
+
+    if (booking.join_enabled !== true) {
+      return booking.join_message || booking.join_lock_reason || "Join access is disabled by admin.";
+    }
+
+    return booking.join_message || "Join access is enabled by admin.";
+  };
+
   return (
     <MainLayout hideNavbar>
       <div className="mx-4 my-8 md:mx-10">
@@ -186,11 +202,9 @@ export default function Profile() {
                         {humanizeStatus(booking.booking_status || booking.status)}
                       </span>
                     </div>
-                    {booking.zoom_link ? (
-                      <p className="mt-2 text-sm text-green-700">Zoom access is ready for this circle.</p>
-                    ) : (
-                      <p className="mt-2 text-sm text-gray-600">Your booking is still pending approval or waiting for its meeting access.</p>
-                    )}
+                    <p className={`mt-2 text-sm ${booking.join_enabled === true && booking.zoom_link && (booking.booking_status || booking.status) === "approved" ? "text-green-700" : "text-gray-600"}`}>
+                      {getBookingAccessMessage(booking)}
+                    </p>
                   </div>
                 ))}
               </div>

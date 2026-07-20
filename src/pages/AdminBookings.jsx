@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ListChecks } from "lucide-react";
+import { Layers3, ListChecks, UserCog } from "lucide-react";
 import AdminShell from "../components/admin/AdminShell";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
@@ -29,6 +29,22 @@ const decisionTemplates = {
   },
 };
 
+const getReadableApiError = (error, fallback) => {
+  if (error?.status === 401) {
+    return "Your admin session expired. Please sign in again.";
+  }
+
+  if (error?.status === 403) {
+    return "You are not allowed to perform this admin action.";
+  }
+
+  if (error?.status >= 500) {
+    return "Server error while processing this action. Please try again.";
+  }
+
+  return formatApiError(error, fallback);
+};
+
 export default function AdminBookings() {
   const toast = useToast();
   const [bookings, setBookings] = useState([]);
@@ -41,6 +57,9 @@ export default function AdminBookings() {
   const [joinControlState, setJoinControlState] = useState({ booking: null, isEnabled: true, reason: "" });
   const [isUpdatingJoinControl, setIsUpdatingJoinControl] = useState(false);
   const [joinLogsState, setJoinLogsState] = useState({ open: false, booking: null, isLoading: false, error: "", rows: [] });
+  const [circleReasonMap, setCircleReasonMap] = useState({});
+  const [bulkJoinState, setBulkJoinState] = useState({ open: false, circle: null, isEnabled: false, reason: "" });
+  const [bulkUpdatingCircleId, setBulkUpdatingCircleId] = useState(null);
 
   const loadBookings = async () => {
     setIsLoading(true);
@@ -103,6 +122,47 @@ export default function AdminBookings() {
 
     return bookings.filter((booking) => [booking.circle_title, booking.user_name, booking.email, booking.status].join(" ").toLowerCase().includes(query));
   }, [bookings, search]);
+
+  const circlesSummary = useMemo(() => {
+    const map = new Map();
+
+    filteredBookings.forEach((booking) => {
+      const circleKey = booking.circle_id || `${booking.circle_title || "untitled"}-${booking.meeting_date || "na"}-${booking.start_time || "na"}`;
+
+      if (!map.has(circleKey)) {
+        map.set(circleKey, {
+          id: booking.circle_id || null,
+          key: circleKey,
+          title: booking.circle_title || "Untitled circle",
+          meeting_date: booking.meeting_date,
+          start_time: booking.start_time,
+          end_time: booking.end_time,
+          total: 0,
+          joinEnabled: 0,
+          approvedCount: 0,
+          missingCircleId: !booking.circle_id,
+        });
+      }
+
+      const item = map.get(circleKey);
+      item.total += 1;
+
+      if (booking.join_enabled === true) {
+        item.joinEnabled += 1;
+      }
+
+      if (booking.status === "approved") {
+        item.approvedCount += 1;
+      }
+
+      if (booking.circle_id) {
+        item.id = booking.circle_id;
+        item.missingCircleId = false;
+      }
+    });
+
+    return Array.from(map.values());
+  }, [filteredBookings]);
 
   const openDecisionModal = (type, booking) => {
     setDecisionState({
@@ -181,6 +241,23 @@ export default function AdminBookings() {
     }
 
     setIsUpdatingJoinControl(true);
+    const targetBookingId = joinControlState.booking.id;
+    const nextJoinEnabled = joinControlState.isEnabled;
+
+    const previousBookings = bookings;
+    setBookings((current) =>
+      current.map((booking) =>
+        booking.id === targetBookingId
+          ? {
+              ...booking,
+              join_enabled: nextJoinEnabled,
+              can_join: nextJoinEnabled,
+              join_lock_reason: nextJoinEnabled ? "" : joinControlState.reason || "Join access disabled by admin",
+              join_locked_at: nextJoinEnabled ? null : new Date().toISOString(),
+            }
+          : booking
+      )
+    );
 
     try {
       const payload = { is_enabled: joinControlState.isEnabled };
@@ -189,15 +266,113 @@ export default function AdminBookings() {
         payload.reason = joinControlState.reason || "Join access disabled by admin";
       }
 
-      await apiClient.put(API_ENDPOINTS.bookings.joinControl(joinControlState.booking.id), payload, { requiresAuth: true });
+      const response = await apiClient.put(API_ENDPOINTS.bookings.joinControl(joinControlState.booking.id), payload, { requiresAuth: true });
+      const responseItem = extractItem(response);
+
+      setBookings((current) =>
+        current.map((booking) =>
+          booking.id === targetBookingId
+            ? {
+                ...booking,
+                join_enabled: responseItem?.join_enabled ?? nextJoinEnabled,
+                can_join: responseItem?.join_enabled ?? nextJoinEnabled,
+              }
+            : booking
+        )
+      );
+
       toast.success(joinControlState.isEnabled ? "Join access enabled." : "Join access disabled.");
       closeJoinControlModal();
-      await loadBookings();
+      await loadBookingsSilently();
     } catch (requestError) {
-      toast.error(formatApiError(requestError, "Unable to update join access."));
+      setBookings(previousBookings);
+      toast.error(getReadableApiError(requestError, "Unable to update join access."));
     } finally {
       setIsUpdatingJoinControl(false);
     }
+  };
+
+  const updateCircleReason = (circleId, value) => {
+    setCircleReasonMap((current) => ({
+      ...current,
+      [circleId]: value,
+    }));
+  };
+
+  const triggerBulkJoinControl = async ({ circleId, isEnabled, reason = "" }) => {
+    if (!circleId) {
+      return;
+    }
+
+    setBulkUpdatingCircleId(circleId);
+
+    try {
+      const payload = {
+        is_enabled: isEnabled,
+      };
+
+      if (reason?.trim()) {
+        payload.reason = reason.trim();
+      }
+
+      const response = await apiClient.put(API_ENDPOINTS.bookings.circleJoinControl(circleId), payload, { requiresAuth: true });
+      const data = extractItem(response);
+      const affectedCount = Number(data?.affected_bookings || 0);
+
+      toast.success(
+        isEnabled
+          ? `Join access enabled for ${affectedCount} booking${affectedCount === 1 ? "" : "s"}.`
+          : `Join access disabled for ${affectedCount} booking${affectedCount === 1 ? "" : "s"}.`
+      );
+
+      await loadBookings();
+    } catch (requestError) {
+      toast.error(getReadableApiError(requestError, "Unable to update circle join access."));
+    } finally {
+      setBulkUpdatingCircleId(null);
+    }
+  };
+
+  const handleBulkEnable = async (circle) => {
+    if (!circle?.id) {
+      toast.error("Circle ID missing in booking data. Bulk action unavailable for this circle.");
+      return;
+    }
+
+    const reason = circleReasonMap[circle.id] || "";
+    await triggerBulkJoinControl({ circleId: circle.id, isEnabled: true, reason });
+  };
+
+  const openBulkDisableModal = (circle) => {
+    if (!circle?.id) {
+      toast.error("Circle ID missing in booking data. Bulk action unavailable for this circle.");
+      return;
+    }
+
+    setBulkJoinState({
+      open: true,
+      circle,
+      isEnabled: false,
+      reason: circleReasonMap[circle.id] || "",
+    });
+  };
+
+  const closeBulkDisableModal = () => {
+    setBulkJoinState({ open: false, circle: null, isEnabled: false, reason: "" });
+  };
+
+  const confirmBulkDisable = async () => {
+    if (!bulkJoinState.circle?.id) {
+      return;
+    }
+
+    await triggerBulkJoinControl({
+      circleId: bulkJoinState.circle.id,
+      isEnabled: false,
+      reason: bulkJoinState.reason,
+    });
+
+    closeBulkDisableModal();
   };
 
   const openJoinLogsModal = async (booking) => {
@@ -381,9 +556,105 @@ export default function AdminBookings() {
         </div>
       </div>
 
+      {!isLoading && !error ? (
+        <section className="grid gap-3">
+          <div className="rounded-[20px] border border-[#ddcfbf] bg-[#fcf4e8] p-4 shadow-[0_10px_30px_-24px_rgba(120,72,38,0.45)]">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 rounded-full bg-[#f2deca] p-2 text-[#8f5d43]">
+                <Layers3 size={16} />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[2px] text-[#8b6e63]">Bulk Circle Join Controls</p>
+                <p className="mt-1 text-sm text-[#5f665f]">Use one click to enable or disable join access for all users in a circle.</p>
+              </div>
+            </div>
+          </div>
+
+          {!circlesSummary.length ? (
+            <div className="rounded-[20px] border border-dashed border-[#ddcfbf] bg-[#fcf7f1] p-4 text-sm text-[#6b716d]">
+              No circle groups available for bulk controls with current filters.
+            </div>
+          ) : null}
+
+          {circlesSummary.map((circle) => {
+            const isBulkBusy = circle.id !== null && circle.id !== undefined && bulkUpdatingCircleId === circle.id;
+            const isUnavailable = !circle.id;
+
+            return (
+              <div key={circle.key || circle.id} className="rounded-[24px] border border-[#efe7dc] bg-white p-4 sm:p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-[#314131]">{circle.title}</p>
+                    <p className="text-xs text-[#6b716d]">
+                      {formatDisplayDate(circle.meeting_date)} | {formatTimeRange(circle.start_time, circle.end_time)}
+                    </p>
+                  </div>
+                  <p className="text-xs text-[#6b716d]">
+                    Join enabled: {circle.joinEnabled}/{circle.total} | Approved: {circle.approvedCount}
+                  </p>
+                </div>
+
+                {isUnavailable ? (
+                  <div className="mt-3 rounded-2xl border border-[#f0d7ca] bg-[#fff4ef] px-3 py-2 text-xs text-[#9d4327]">
+                    Bulk action unavailable: this circle record has no circle_id in booking payload.
+                  </div>
+                ) : null}
+
+                <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[2px] text-[#6b716d]">Reason (optional)</span>
+                    <textarea
+                      rows="2"
+                      value={circleReasonMap[circle.id || circle.key] || ""}
+                      onChange={(event) => updateCircleReason(circle.id || circle.key, event.target.value)}
+                      className="w-full rounded-2xl border border-[#e3d7ca] bg-[#fcf7f1] px-3 py-2 text-sm outline-none"
+                      placeholder="Optional note for bulk join control"
+                      disabled={isUnavailable || isBulkBusy}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    disabled={isUnavailable || isBulkBusy}
+                    onClick={() => handleBulkEnable(circle)}
+                    className="rounded-full border border-[#c9e2d0] px-4 py-2 text-sm font-semibold text-[#255135] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isBulkBusy ? "Saving..." : "Enable Join For All"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isUnavailable || isBulkBusy}
+                    onClick={() => openBulkDisableModal(circle)}
+                    className="rounded-full border border-[#efc6b8] px-4 py-2 text-sm font-semibold text-[#9d4327] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isBulkBusy ? "Saving..." : "Disable Join For All"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
+
       {isLoading ? <LoadingState label="Loading bookings..." /> : null}
       {!isLoading && error ? <ErrorState message={error} onRetry={loadBookings} /> : null}
-      {!isLoading && !error ? <DataTable columns={columns} rows={filteredBookings} emptyMessage="No bookings found." /> : null}
+      {!isLoading && !error ? (
+        <section className="space-y-3">
+          <div className="rounded-[20px] border border-[#d6e3d6] bg-[#eff7f0] p-4 shadow-[0_10px_30px_-24px_rgba(35,78,47,0.45)]">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 rounded-full bg-[#dcebdd] p-2 text-[#35613f]">
+                <UserCog size={16} />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[2px] text-[#527054]">Per User Join Controls</p>
+                <p className="mt-1 text-sm text-[#4f6451]">Manage join access for individual bookings from the Actions column.</p>
+              </div>
+            </div>
+          </div>
+          <DataTable columns={columns} rows={filteredBookings} emptyMessage="No bookings found." />
+        </section>
+      ) : null}
 
       <Modal
         open={Boolean(decisionTemplate)}
@@ -459,6 +730,44 @@ export default function AdminBookings() {
               />
             </label>
           ) : null}
+        </div>
+      </Modal>
+
+      <Modal
+        open={bulkJoinState.open}
+        onClose={closeBulkDisableModal}
+        title="Disable join access for this circle"
+        description={`This will disable join access for all bookings in ${bulkJoinState.circle?.title || "the selected circle"}.`}
+        footer={[
+          <button key="cancel" type="button" onClick={closeBulkDisableModal} className="rounded-full border border-[#ded3c7] px-5 py-3 text-sm font-semibold text-[#314131]">
+            Cancel
+          </button>,
+          <button
+            key="confirm"
+            type="button"
+            disabled={bulkUpdatingCircleId === bulkJoinState.circle?.id}
+            onClick={confirmBulkDisable}
+            className="rounded-full bg-[#a44d31] px-5 py-3 text-sm font-semibold text-white disabled:opacity-70"
+          >
+            {bulkUpdatingCircleId === bulkJoinState.circle?.id ? "Disabling..." : "Confirm Disable"}
+          </button>,
+        ]}
+      >
+        <div className="space-y-3">
+          <div className="rounded-[18px] bg-[#fff3ee] p-4 text-sm text-[#8f3e27]">
+            This action impacts all users in this circle at once.
+          </div>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-[#314131]">Reason (optional)</span>
+            <textarea
+              rows="4"
+              value={bulkJoinState.reason}
+              onChange={(event) => setBulkJoinState((current) => ({ ...current, reason: event.target.value }))}
+              className="w-full rounded-2xl border border-[#e3d7ca] bg-[#fcf7f1] px-4 py-3 outline-none"
+              placeholder="Optional reason shown for audit logs/messages"
+            />
+          </label>
         </div>
       </Modal>
 

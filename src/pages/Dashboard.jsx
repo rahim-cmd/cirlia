@@ -147,32 +147,24 @@ export default function Dashboard() {
       return false;
     }
 
-    if (booking.zoom_status === "expired") {
-      return false;
-    }
-
     if (!booking.zoom_link) {
       return false;
     }
 
-    return booking.join_enabled === true && booking.can_join === true;
+    return booking.join_enabled === true;
   };
 
   const getJoinHelperText = (booking) => {
-    if (booking.zoom_status === "expired") {
-      return booking.zoom_message || "Meeting completed or join window expired.";
+    if (booking.join_message) {
+      return booking.join_message;
     }
 
     if (!booking.zoom_link) {
-      return booking.zoom_message || booking.join_message || "Join URL is not available yet.";
+      return booking.zoom_message || "Join URL is not available yet.";
     }
 
     if (booking.join_enabled === false) {
-      return booking.join_lock_reason || booking.join_message || "Join access is disabled by admin.";
-    }
-
-    if (booking.can_join === false) {
-      return booking.join_message || booking.join_lock_reason || "Join will be enabled 2 minutes before meeting start time.";
+      return booking.join_lock_reason || "Join access is disabled by admin.";
     }
 
     if (booking.join_lock_reason) {
