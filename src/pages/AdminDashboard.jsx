@@ -141,6 +141,10 @@ export default function AdminDashboard() {
                   <p className="font-semibold text-[#314131]">Open bookings</p>
                   <p className="mt-2 text-sm text-[#667066]">Approve or reject requests with confirmation modals.</p>
                 </Link>
+                <Link to="/admin/reviews" className="rounded-[24px] bg-[#fcf7f1] p-4 transition hover:bg-[#f7efe6] sm:col-span-2">
+                  <p className="font-semibold text-[#314131]">Moderate reviews</p>
+                  <p className="mt-2 text-sm text-[#667066]">Approve public testimonials before they appear on homepage.</p>
+                </Link>
               </div>
             </div>
 

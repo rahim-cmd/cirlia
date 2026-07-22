@@ -1,0 +1,78 @@
+Frontend Handoff Prompt: Circle Reviews with Admin Approval
+
+Objective:
+1) User can submit/update/delete review for joined approved booking from dashboard.
+2) Review appears on homepage only after admin approval.
+3) Homepage testimonials section must render directly below Meet the Founder section.
+4) Keep existing Circlia UI style (sage + sand palette, rounded cards, soft shadows, responsive layout).
+
+API Base:
+- Primary: /api/v1/reviews
+- Legacy alias: /api/reviews
+
+User Dashboard APIs:
+1) POST /api/v1/reviews/bookings/:bookingId
+Body:
+{
+  "rating": 4,
+  "review_text": "Session was insightful and practical.",
+  "is_public": true
+}
+Notes:
+- Upsert behavior for same booking.
+- Backend resets review_status to pending after create/update.
+- Show badge: pending admin approval.
+
+2) GET /api/v1/reviews/me
+- Fetch and merge by booking_id with dashboard bookings.
+
+3) DELETE /api/v1/reviews/:id
+- Remove review from local state immediately after success.
+
+Admin Moderation APIs:
+1) GET /api/v1/reviews/admin?status=pending&limit=50&circle_id=10
+- Default status filter: pending.
+
+2) PUT /api/v1/reviews/:id/moderation
+Approve body:
+{
+  "status": "approved",
+  "note": "Looks good for homepage."
+}
+Reject body:
+{
+  "status": "rejected",
+  "note": "Reason for rejection"
+}
+
+Homepage API:
+- GET /api/v1/reviews/homepage?limit=12
+- Public endpoint.
+- Backend returns only approved + public reviews.
+- If array empty, do not render section.
+
+UI Requirements:
+Dashboard:
+- Show Rate this meeting action on eligible bookings.
+- Form fields: star rating (1-5), review text, public toggle.
+- Show status badge from API: pending / approved / rejected.
+- If pending: "Waiting for admin approval".
+- If rejected and moderation note exists: show note.
+
+Admin:
+- Build Reviews moderation screen with filters: status, limit, optional circle_id.
+- Row actions: Approve, Reject.
+- After moderation success, refresh/remove row without full page reload.
+
+Homepage:
+- Section title: "What members say".
+- Place below Meet the Founder section.
+- Card fields: rating stars, review_text, reviewer_name, circle_title, meeting_date.
+- Match existing website look and spacing.
+
+Error Handling:
+- 401: session expired -> redirect/login flow.
+- 403: admin-only denial message.
+- 422: show validation/eligibility message near form/action.
+- 404: booking/review not found.
+- 500: generic retry message.

@@ -36,6 +36,16 @@ export const API_ENDPOINTS = {
     joinControl: (id) => `/bookings/${id}/join/control`,
     circleJoinControl: (circleId) => `/bookings/circle/${circleId}/join/control`,
   },
+  reviews: {
+    baseV1: "/reviews",
+    baseLegacy: "/api/reviews",
+    upsertByBooking: (bookingId) => `/reviews/bookings/${bookingId}`,
+    mine: "/reviews/me",
+    admin: "/reviews/admin",
+    moderationById: (id) => `/reviews/${id}/moderation`,
+    homepage: "/reviews/homepage",
+    byId: (id) => `/reviews/${id}`,
+  },
   users: {
     list: "/users",
     byId: (id) => `/users/${id}`,

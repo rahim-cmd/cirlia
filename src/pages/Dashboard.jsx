@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Link as LinkIcon, LogOut, Square } from "lucide-react";
+import { CalendarDays, Link as LinkIcon, LogOut, Square, Star, Trash2 } from "lucide-react";
 import MainLayout from "../layout/MainLayout";
 import Footer from "../components/Footer";
+import Modal from "../components/ui/Modal";
 import StatusBadge from "../components/ui/StatusBadge";
 import { ErrorState, LoadingState } from "../components/ui/LoadingState";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { API_ENDPOINTS } from "../config/api";
 import { apiClient } from "../lib/apiClient";
+import { reviewsApi } from "../lib/reviewsApi";
 import { extractItem, extractList, formatApiError } from "../utils/apiResponse";
 import { normalizeBooking } from "../utils/entities";
 import { formatDisplayDate, formatTimeRange, humanizeStatus } from "../utils/formatters";
@@ -23,20 +25,53 @@ export default function Dashboard() {
   const [cancellingId, setCancellingId] = useState(null);
   const [joiningBookingId, setJoiningBookingId] = useState(null);
   const [endingBookingId, setEndingBookingId] = useState(null);
+  const [reviewsByBooking, setReviewsByBooking] = useState({});
+  const [reviewModal, setReviewModal] = useState({ open: false, booking: null });
+  const [reviewForm, setReviewForm] = useState({ rating: 0, review_text: "", is_public: true });
+  const [reviewFormError, setReviewFormError] = useState("");
+  const [reviewFormLocked, setReviewFormLocked] = useState(false);
+  const [isSavingReview, setIsSavingReview] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState(false);
 
-  const loadBookings = async ({ silent = false } = {}) => {
+  const redirectToLogin = useCallback(() => {
+    toast.info("Please sign in again to continue.");
+    navigate("/login", { replace: true });
+  }, [navigate, toast]);
+
+  const mapReviewsByBooking = (reviewList = []) => {
+    return reviewList.reduce((accumulator, review) => {
+      if (review?.booking_id) {
+        accumulator[review.booking_id] = review;
+      }
+
+      return accumulator;
+    }, {});
+  };
+
+  const loadDashboardData = useCallback(async ({ silent = false } = {}) => {
     if (!silent) {
       setIsLoading(true);
       setError("");
     }
 
     try {
-      const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
-      setBookings(extractList(payload).map(normalizeBooking));
+      const [bookingsPayload, myReviews] = await Promise.all([
+        apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true }),
+        reviewsApi.getMyReviews(),
+      ]);
+
+      setBookings(extractList(bookingsPayload).map(normalizeBooking));
+      setReviewsByBooking(mapReviewsByBooking(myReviews));
+
       if (!silent) {
         setError("");
       }
     } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       if (!silent) {
         setError(formatApiError(requestError, "Unable to load your bookings."));
       }
@@ -45,19 +80,28 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     }
-  };
+  }, [redirectToLogin]);
 
   useEffect(() => {
     let ignore = false;
 
-    const loadInitialBookings = async () => {
+    const loadInitialDashboardData = async () => {
       try {
-        const payload = await apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true });
+        const [bookingsPayload, myReviews] = await Promise.all([
+          apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true }),
+          reviewsApi.getMyReviews(),
+        ]);
 
         if (!ignore) {
-          setBookings(extractList(payload).map(normalizeBooking));
+          setBookings(extractList(bookingsPayload).map(normalizeBooking));
+          setReviewsByBooking(mapReviewsByBooking(myReviews));
         }
       } catch (requestError) {
+        if (!ignore && requestError?.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
         if (!ignore) {
           setError(formatApiError(requestError, "Unable to load your bookings."));
         }
@@ -68,23 +112,39 @@ export default function Dashboard() {
       }
     };
 
-    loadInitialBookings();
+    const loadDashboardDataSilently = async () => {
+      try {
+        const [bookingsPayload, myReviews] = await Promise.all([
+          apiClient.get(API_ENDPOINTS.bookings.mine, { requiresAuth: true }),
+          reviewsApi.getMyReviews(),
+        ]);
+
+        if (!ignore) {
+          setBookings(extractList(bookingsPayload).map(normalizeBooking));
+          setReviewsByBooking(mapReviewsByBooking(myReviews));
+        }
+      } catch {
+        // Keep existing dashboard state if silent refresh fails.
+      }
+    };
+
+    loadInitialDashboardData();
 
     const refreshOnFocus = () => {
       if (!ignore && document.visibilityState === "visible") {
-        loadBookings({ silent: true });
+        loadDashboardDataSilently();
       }
     };
 
     const refreshOnBookingChange = () => {
       if (!ignore) {
-        loadBookings({ silent: true });
+        loadDashboardDataSilently();
       }
     };
 
     const intervalId = window.setInterval(() => {
       if (!ignore && document.visibilityState === "visible") {
-        loadBookings({ silent: true });
+        loadDashboardDataSilently();
       }
     }, 30000);
 
@@ -99,15 +159,16 @@ export default function Dashboard() {
       document.removeEventListener("visibilitychange", refreshOnFocus);
       window.removeEventListener("circlia:bookings-changed", refreshOnBookingChange);
     };
-  }, []);
+  }, [redirectToLogin]);
 
   const bookingSummary = useMemo(
     () => ({
       total: bookings.length,
       approved: bookings.filter((booking) => booking.booking_status === "approved").length,
       pending: bookings.filter((booking) => booking.booking_status === "pending").length,
+      reviewed: Object.keys(reviewsByBooking).length,
     }),
-    [bookings]
+    [bookings, reviewsByBooking]
   );
 
   const getZoomStateLabel = (booking) => {
@@ -220,7 +281,7 @@ export default function Dashboard() {
 
       await apiClient.put(API_ENDPOINTS.bookings.cancel(bookingId), {}, { requiresAuth: true });
       toast.success("Booking cancelled successfully.");
-      await loadBookings();
+      await loadDashboardData();
       window.dispatchEvent(
         new CustomEvent("circlia:bookings-changed", {
           detail: {
@@ -230,6 +291,11 @@ export default function Dashboard() {
         })
       );
     } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       toast.error(formatApiError(requestError, "Unable to cancel booking."));
     } finally {
       setCancellingId(null);
@@ -250,12 +316,17 @@ export default function Dashboard() {
         responseData?.zoom_link || responseData?.zoomLink || responseData?.join_url || responseData?.joinUrl || booking.zoom_link;
 
       toast.success("Meeting access granted. Opening Zoom...");
-      await loadBookings({ silent: true });
+      await loadDashboardData({ silent: true });
 
       if (responseZoomLink) {
         window.open(responseZoomLink, "_blank", "noopener,noreferrer");
       }
     } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       toast.error(formatApiError(requestError, "Unable to start join session."));
     } finally {
       setJoiningBookingId(null);
@@ -272,12 +343,163 @@ export default function Dashboard() {
     try {
       await apiClient.post(API_ENDPOINTS.bookings.joinEnd(booking.id), {}, { requiresAuth: true });
       toast.success("Session ended successfully.");
-      await loadBookings({ silent: true });
+      await loadDashboardData({ silent: true });
     } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       toast.error(formatApiError(requestError, "Unable to end session."));
     } finally {
       setEndingBookingId(null);
     }
+  };
+
+  const openReviewModal = (booking) => {
+    const existingReview = reviewsByBooking[booking.id];
+
+    setReviewModal({ open: true, booking });
+    setReviewForm({
+      rating: Number(existingReview?.rating || 0),
+      review_text: existingReview?.review_text || "",
+      is_public: existingReview?.is_public ?? true,
+    });
+    setReviewFormError("");
+    setReviewFormLocked(false);
+  };
+
+  const closeReviewModal = () => {
+    setReviewModal({ open: false, booking: null });
+    setReviewForm({ rating: 0, review_text: "", is_public: true });
+    setReviewFormError("");
+    setReviewFormLocked(false);
+  };
+
+  const getExistingReview = () => {
+    if (!reviewModal.booking?.id) {
+      return null;
+    }
+
+    return reviewsByBooking[reviewModal.booking.id] || null;
+  };
+
+  const handleReviewSubmit = async () => {
+    const bookingId = reviewModal.booking?.id;
+
+    if (!bookingId || reviewFormLocked) {
+      return;
+    }
+
+    setIsSavingReview(true);
+    setReviewFormError("");
+
+    try {
+      const saved = await reviewsApi.upsertBookingReview(bookingId, {
+        rating: Number(reviewForm.rating),
+        review_text: reviewForm.review_text,
+        is_public: Boolean(reviewForm.is_public),
+      });
+
+      setReviewsByBooking((current) => ({
+        ...current,
+        [bookingId]: saved,
+      }));
+
+      window.dispatchEvent(new CustomEvent("circlia:reviews-changed"));
+
+      toast.success(getExistingReview() ? "Review updated successfully." : "Review submitted successfully.");
+      closeReviewModal();
+    } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      if (requestError?.status === 422) {
+        setReviewFormError(formatApiError(requestError, "You are not eligible to review this meeting yet."));
+        setReviewFormLocked(true);
+        return;
+      }
+
+      if (requestError?.status === 404) {
+        setReviewFormError("Booking/review not found.");
+        setReviewFormLocked(true);
+        return;
+      }
+
+      if (requestError?.status >= 500) {
+        setReviewFormError("Something went wrong. Please try again.");
+        return;
+      }
+
+      setReviewFormError(formatApiError(requestError, "Unable to save your review."));
+    } finally {
+      setIsSavingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    const existingReview = getExistingReview();
+
+    if (!existingReview?.id) {
+      return;
+    }
+
+    setIsDeletingReview(true);
+    setReviewFormError("");
+
+    try {
+      await reviewsApi.deleteReview(existingReview.id);
+
+      setReviewsByBooking((current) => {
+        const next = { ...current };
+        delete next[reviewModal.booking.id];
+        return next;
+      });
+
+      window.dispatchEvent(new CustomEvent("circlia:reviews-changed"));
+
+      toast.success("Review deleted successfully.");
+      closeReviewModal();
+    } catch (requestError) {
+      if (requestError?.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      if (requestError?.status === 404) {
+        setReviewFormError("Booking/review not found.");
+        return;
+      }
+
+      if (requestError?.status >= 500) {
+        setReviewFormError("Something went wrong. Please try again.");
+        return;
+      }
+
+      setReviewFormError(formatApiError(requestError, "Unable to delete review."));
+    } finally {
+      setIsDeletingReview(false);
+    }
+  };
+
+  const reviewForActiveModal = getExistingReview();
+
+  const renderStars = (rating) => {
+    const safeRating = Math.max(0, Math.min(5, Number(rating || 0)));
+
+    return Array.from({ length: 5 }, (_, index) => {
+      const active = index < safeRating;
+
+      return (
+        <Star
+          key={`rating-star-${index}`}
+          size={16}
+          className={active ? "fill-[#f0a63b] text-[#f0a63b]" : "text-[#d7c7ad]"}
+        />
+      );
+    });
   };
 
   return (
@@ -301,11 +523,12 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="mt-8 grid gap-4 md:grid-cols-4">
               {[
                 ["Total bookings", bookingSummary.total],
                 ["Approved", bookingSummary.approved],
                 ["Pending", bookingSummary.pending],
+                ["Reviewed", bookingSummary.reviewed],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-[26px] bg-[#fcf7f1] p-5">
                   <p className="text-sm text-[#6a746a]">{label}</p>
@@ -318,7 +541,7 @@ export default function Dashboard() {
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
             <div className="space-y-4">
               {isLoading ? <LoadingState label="Loading your bookings..." /> : null}
-              {!isLoading && error ? <ErrorState message={error} onRetry={loadBookings} /> : null}
+              {!isLoading && error ? <ErrorState message={error} onRetry={loadDashboardData} /> : null}
 
               {!isLoading && !error && !bookings.length ? (
                 <div className="rounded-[30px] border border-dashed border-[#ddcfbf] bg-[#fcf7f1] p-8 text-center text-[#6b716d]">
@@ -329,7 +552,10 @@ export default function Dashboard() {
                 </div>
               ) : null}
 
-              {!isLoading && !error && bookings.map((booking) => (
+              {!isLoading && !error && bookings.map((booking) => {
+                const existingReview = reviewsByBooking[booking.id] || null;
+
+                return (
                 <article key={booking.id} className="rounded-[30px] border border-[#efe7dc] bg-white p-6 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.25)]">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
@@ -417,12 +643,47 @@ export default function Dashboard() {
                           >
                             <Square size={14} /> {endingBookingId === booking.id ? "Ending..." : "End Session"}
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openReviewModal(booking)}
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#e3d7ca] px-5 py-3 font-semibold text-[#314131]"
+                          >
+                            <Star size={14} className="text-[#f0a63b]" /> {existingReview ? "Edit review" : "Rate this meeting"}
+                          </button>
                         </div>
+
+                        {existingReview ? (
+                          <div className="rounded-[16px] border border-[#ebdfcf] bg-[#fffaf2] p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-xs uppercase tracking-[3px] text-[#8b6e63]">Your review</p>
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+                                <StatusBadge status={existingReview.review_status || "pending"} />
+                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#5f665f]">
+                                  {existingReview.is_public ? "Public enabled" : "Private"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex items-center gap-1">{renderStars(existingReview.rating)}</div>
+                            <p className="mt-3 text-sm leading-7 text-[#4d564d]">{existingReview.review_text || "No comment added."}</p>
+                            {existingReview.review_status === "pending" ? (
+                              <p className="mt-2 text-xs text-[#8b6e63]">Waiting for admin approval.</p>
+                            ) : null}
+                            {existingReview.review_status === "rejected" ? (
+                              <p className="mt-2 text-xs text-[#a44d31]">
+                                {existingReview.moderation_note || "This review was rejected by admin."}
+                              </p>
+                            ) : null}
+                            {existingReview.review_status === "approved" && existingReview.is_public ? (
+                              <p className="mt-2 text-xs text-[#3d6a48]">Approved and visible on homepage.</p>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>
                 </article>
-              ))}
+              )})}
             </div>
 
             <aside className="rounded-[32px] border border-[#efe7dc] bg-white p-6 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.25)]">
@@ -447,6 +708,103 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      <Modal
+        open={reviewModal.open}
+        onClose={closeReviewModal}
+        title={reviewForActiveModal ? "Edit your review" : "Rate this meeting"}
+        description={
+          reviewModal.booking
+            ? `${reviewModal.booking.circle_title} on ${formatDisplayDate(reviewModal.booking.meeting_date)}`
+            : ""
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-[#314131]">Your rating</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {Array.from({ length: 5 }, (_, index) => {
+                const score = index + 1;
+                const active = score <= Number(reviewForm.rating || 0);
+
+                return (
+                  <button
+                    key={`review-input-star-${score}`}
+                    type="button"
+                    disabled={reviewFormLocked || isSavingReview || isDeletingReview}
+                    onClick={() => setReviewForm((current) => ({ ...current, rating: score }))}
+                    className="rounded-full border border-[#eadfce] bg-white p-2 disabled:cursor-not-allowed disabled:opacity-60"
+                    aria-label={`Rate ${score} stars`}
+                  >
+                    <Star size={18} className={active ? "fill-[#f0a63b] text-[#f0a63b]" : "text-[#c9b89f]"} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-sm font-semibold text-[#314131]">Your review</span>
+            <textarea
+              rows={4}
+              value={reviewForm.review_text}
+              disabled={reviewFormLocked || isSavingReview || isDeletingReview}
+              onChange={(event) => setReviewForm((current) => ({ ...current, review_text: event.target.value }))}
+              className="mt-2 w-full rounded-2xl border border-[#e7ddcf] bg-white px-4 py-3 text-sm text-[#314131] outline-none transition focus:border-[#cfbea7] focus:ring-2 focus:ring-[#efe3d2] disabled:cursor-not-allowed disabled:bg-[#f7f3ec]"
+              placeholder="How was your experience in this circle meeting?"
+            />
+          </label>
+
+          <label className="flex items-center gap-3 rounded-2xl border border-[#eadfce] bg-[#fcf7f1] px-4 py-3">
+            <input
+              type="checkbox"
+              checked={reviewForm.is_public}
+              disabled={reviewFormLocked || isSavingReview || isDeletingReview}
+              onChange={(event) => setReviewForm((current) => ({ ...current, is_public: event.target.checked }))}
+              className="h-4 w-4 rounded border-[#ccb99d] text-[#314131]"
+            />
+            <span className="text-sm text-[#4f584f]">Show this review on homepage testimonials</span>
+          </label>
+
+          {reviewFormError ? <p className="text-sm text-[#a44d31]">{reviewFormError}</p> : null}
+
+          <div className="flex flex-wrap justify-end gap-3">
+            {reviewForActiveModal?.id ? (
+              <button
+                type="button"
+                onClick={handleDeleteReview}
+                disabled={isSavingReview || isDeletingReview}
+                className="inline-flex items-center gap-2 rounded-full border border-[#e7c7bf] px-5 py-2 text-sm font-semibold text-[#a44d31] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 size={14} /> {isDeletingReview ? "Deleting..." : "Delete review"}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={closeReviewModal}
+              disabled={isSavingReview || isDeletingReview}
+              className="rounded-full border border-[#e3d7ca] px-5 py-2 text-sm font-semibold text-[#314131] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleReviewSubmit}
+              disabled={
+                reviewFormLocked ||
+                isSavingReview ||
+                isDeletingReview ||
+                Number(reviewForm.rating) < 1 ||
+                !String(reviewForm.review_text || "").trim()
+              }
+              className="rounded-full bg-[#314131] px-5 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSavingReview ? "Saving..." : reviewForActiveModal ? "Update review" : "Submit review"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <Footer />
     </MainLayout>
   );

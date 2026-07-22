@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminCircles from "./pages/AdminCircles";
 import AdminUsers from "./pages/AdminUsers";
 import AdminBookings from "./pages/AdminBookings";
+import AdminReviews from "./pages/AdminReviews";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -69,6 +70,7 @@ function App() {
         <Route path="/admin/circles" element={<ProtectedRoute requireAdmin><AdminCircles /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/bookings" element={<ProtectedRoute requireAdmin><AdminBookings /></ProtectedRoute>} />
+        <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-and-conditions" element={<TermsPage />} />
       </Routes>

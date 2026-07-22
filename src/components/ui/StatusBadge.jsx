@@ -11,6 +11,8 @@ const STATUS_STYLES = {
   unsynced: "bg-[#fff1ed] text-[#9d4327] border-[#efc6b8]",
   enabled: "bg-[#edf7ef] text-[#255135] border-[#c9e2d0]",
   disabled: "bg-[#fff1ed] text-[#9d4327] border-[#efc6b8]",
+  public: "bg-[#edf7ef] text-[#255135] border-[#c9e2d0]",
+  private: "bg-[#f3f1ef] text-[#6c625a] border-[#ddd5cf]",
   default: "bg-[#f5f2ee] text-[#314131] border-[#ddd5cf]",
 };
 

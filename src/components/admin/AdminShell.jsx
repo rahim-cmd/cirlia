@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { CalendarDays, LayoutGrid, ListChecks, LogOut, Users } from "lucide-react";
+import { CalendarDays, LayoutGrid, ListChecks, LogOut, MessageSquareQuote, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import CircleCursor from "../CircleCursor";
@@ -9,6 +9,7 @@ const navigation = [
   { to: "/admin/circles", label: "Circles", icon: CalendarDays },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/bookings", label: "Bookings", icon: ListChecks },
+  { to: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote },
 ];
 
 export default function AdminShell({ title, subtitle, actions, children }) {

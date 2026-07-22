@@ -11,6 +11,8 @@ import FounderSection from "../components/FounderSection";
 import GallerySection from "../components/GallerySection";
 import Footer from "../components/Footer";
 import JournalShowcase from "../components/JournalShowcase";
+import TestimonialsSection from "../components/TestimonialsSection";
+import ShowReviews from "../components/reviews/ShowReviews";
 const Home = () => {
   return (
 <>
@@ -25,8 +27,9 @@ const Home = () => {
     <QuoteSection />
     <JournalSection />
     <FounderSection />
+    <ShowReviews />
+    <TestimonialsSection />
     <JournalShowcase />
-    
     <Footer />
     </>
   )
